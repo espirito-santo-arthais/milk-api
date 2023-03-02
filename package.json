@@ -1,0 +1,30 @@
+{
+  "name": "milk-api",
+  "version": "1.0.0",
+  "description": "Api para registrar o volume mensal de leite produzido, o preço mensal por litro de leite e o montante mensal recebido pelos produtores.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arthais-systems/milk-api.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "NodeJS",
+    "Express",
+    "Mongoose",
+    "MochaJS",
+    "ChaiJS",
+    "Swagger",
+    "MongoDB",
+    "Milk"
+  ],
+  "author": "Raimundo Santo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/arthais-systems/milk-api/issues"
+  },
+  "homepage": "https://github.com/arthais-systems/milk-api#readme"
+}
