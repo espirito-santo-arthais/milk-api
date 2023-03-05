@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const colors = require("colors");
+const config = require("./config/config");
+const db = require("./config/config");
 
 const app = express();
 
@@ -24,6 +26,11 @@ app.use(express.json());
 
 // parse requests of content-type: application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
+
+// config MongoDB connection
+
+// TODO: put config here.
+console.log(db.blue);
 
 // simple router
 app.get("/", (req, res) => {
