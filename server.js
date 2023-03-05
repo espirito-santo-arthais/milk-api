@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const colors = require("colors");
 
 const app = express();
 
@@ -7,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT | 8080;
 
 app.listen(PORT, () => {
-  console.log(`O servidor está escutando na porta ${PORT}.`);
+  console.log(`O servidor está escutando na porta ${PORT}.`.green);
 });
 
 // enable Cross-Origin Requests CORS
