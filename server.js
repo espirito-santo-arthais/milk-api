@@ -10,10 +10,13 @@ app.listen(PORT, () => {
   console.log(`O servidor está escutando na porta ${PORT}.`);
 });
 
+// enable Cross-Origin Requests CORS
 const corsOptions = {
   origin: "http://localhost:8081",
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
+
+app.use(cors(corsOptions));
 
 // parse requests of content-type: application/json
 app.use(express.json());
