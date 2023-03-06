@@ -1,17 +1,11 @@
 const express = require("express");
 const cors = require("cors");
-const colors = require("colors");
-const config = require("./config/config");
-const db = require("./config/config");
+const dotenv = require("dotenv");
+const mongoose = require("mongoose");
+const colors = require("colors")
+const dbConnectionString = require("./config/config");
 
 const app = express();
-
-// set port, listen for requests
-const PORT = process.env.PORT | 8080;
-
-app.listen(PORT, () => {
-  console.log(`O servidor está escutando na porta ${PORT}.`.green);
-});
 
 // enable Cross-Origin Requests CORS
 const corsOptions = {
@@ -28,9 +22,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // config MongoDB connection
+mongoose
+  .connect(dbConnectionString, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Conectado ao servidor de banco de dados!".blue);
 
-// TODO: put config here.
-console.log(db.blue);
+    // set port, listen for requests
+    const PORT = process.env.PORT | 8080;
+
+    app.listen(PORT, () => {
+      console.log(`O servidor está escutando na porta ${PORT}.`.green);
+    });
+  })
+  .catch((error) => console.log("Não foi possível conectar ao servidor de banco de dados!".red));
 
 // simple router
 app.get("/", (req, res) => {
