@@ -45,3 +45,15 @@ mongoose
 app.get("/", (req, res) => {
   res.json({ message: "Bem-vindo a aplicação Milk-API!" });
 });
+
+// roteador dos fazendeiros
+app.use("/api/fazendeiros", require("./routes/fazendeiros-routes"));
+
+// roteador das fazendas
+app.use("/api/fazendas", require("./routes/fazendas-routes"));
+
+// roteador das producoes
+app.use("/api/producoes", require("./routes/producoes-routes"));
+
+// roteador das tabelas de precos
+app.use("/api/tabelas-de-precos", require("./routes/tabelasprecos-routes"));
