@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-const colors = require("colors")
+const colors = require("colors");
 const dbConnectionString = require("./config/config");
 
 const app = express();
@@ -37,9 +37,11 @@ mongoose
       console.log(`O servidor está escutando na porta ${PORT}.`.green);
     });
   })
-  .catch((error) => console.log("Não foi possível conectar ao servidor de banco de dados!".red));
+  .catch((error) =>
+    console.log("Não foi possível conectar ao servidor de banco de dados!".red)
+  );
 
-// simple router
+// roteador simples
 app.get("/", (req, res) => {
   res.json({ message: "Bem-vindo a aplicação Milk-API!" });
 });
