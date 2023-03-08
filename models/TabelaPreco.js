@@ -1,6 +1,14 @@
 const mongoose = require("mongoose");
 
 const tabelaPrecoSchema = new mongoose.Schema({
+    ano: {
+      type: Number,
+      required: true,
+    },
+    semestre: {
+      type: Number,
+      required: true,
+    },
     precoBasePorLitro: {
       type: Number,
       required: true,

@@ -41,19 +41,21 @@ mongoose
     console.log("Não foi possível conectar ao servidor de banco de dados!".red)
   );
 
+mongoose.set("strictQuery", false);
+
 // roteador simples
 app.get("/", (req, res) => {
   res.json({ message: "Bem-vindo a aplicação Milk-API!" });
 });
 
 // roteador dos fazendeiros
-app.use("/api/fazendeiros", require("./routes/fazendeiros-routes"));
+app.use("/milk/fazendeiros", require("./routes/fazendeiros-routes"));
 
 // roteador das fazendas
-app.use("/api/fazendas", require("./routes/fazendas-routes"));
+app.use("/milk/fazendas", require("./routes/fazendas-routes"));
 
 // roteador das producoes
-app.use("/api/producoes", require("./routes/producoes-routes"));
+app.use("/milk/producoes", require("./routes/producoes-routes"));
 
 // roteador das tabelas de precos
-app.use("/api/tabelas-de-precos", require("./routes/tabelasprecos-routes"));
+app.use("/milk/tabelas-de-precos", require("./routes/tabelasprecos-routes"));
