@@ -10,7 +10,7 @@ function validade(req, res) {
     });
   }
 
-  const fazendeiroTemp = Fazendeiro.findByPk(String(req.body.fazendeiro));
+  const fazendeiroTemp = Fazendeiro.findById(String(req.body.fazendeiro));
   if (!fazendeiroTemp) {
     res.status(400).json({
       description: "Fazendeiro não encontrado!",
@@ -23,7 +23,7 @@ function validade(req, res) {
     });
   }
 
-  const fazendaTemp = Fazenda.findByPk(String(req.body.fazenda));
+  const fazendaTemp = Fazenda.findById(String(req.body.fazenda));
   if (!fazendaTemp) {
     res.status(400).json({
       description: "Fazenda não encontrada!",
@@ -58,7 +58,7 @@ function validade(req, res) {
     });
   }
 
-  if (!isNumeric(String(req.body.litrosProduzidos).replaceAll(",", "."))) {
+  if (isNaN(String(req.body.litrosProduzidos).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [litrosProduzidos] deve conter um valor numérico!",
     });
@@ -105,9 +105,19 @@ const createProducao = AssyncHandler(async (req, res) => {
 });
 
 const updateProducao = AssyncHandler(async (req, res) => {
+  if (!req.params.id) {
+    res.status(400).json({
+      description: "O parâmetro [id] deve ser preenchido!",
+    });
+  }
   if (!req.body.id) {
     res.status(400).json({
       description: "O campo [id] deve ser preenchido!",
+    });
+  }
+  if (req.params.id !== req.body.id) {
+    res.status(400).json({
+      description: `O parâmetro [id] não pode ser diferente do campo [id]: ${req.params.id} !== ${req.body.id}`,
     });
   }
   validade(req, res);
@@ -115,13 +125,13 @@ const updateProducao = AssyncHandler(async (req, res) => {
   const producaoMap = buildMap(req);
 
   // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
-  const producao = await Producao.update(
-    producaoMap,
+  const producao = await Producao.findByIdAndUpdate(
     {
       where: { id: producaoMap._id },
     },
+    producaoMap,
     {
-      new: true,
+      returnDocument: 'after'
     }
   );
 
@@ -160,46 +170,54 @@ const findProducaoById = AssyncHandler(async (req, res) => {
 
   const id = String(req.params.id);
 
-  const producao = await Producao.findByPk(id);
 
-  res.status(200).json({
-    description: "Produção de leite obtida com sucesso!",
-    data: producao,
-  });
+  const producao = await Producao.findById(id);
+
+  if (producao) {
+    res.status(200).json({
+      description: "Produção de leite obtida com sucesso!",
+      data: producao,
+    });
+  } else {
+    res.status(404).json({
+      description: "Produção de leite não encontrada!",
+      data: fazenda,
+    });
+  }
 });
 
 const findProducoesByDataProducaoInicialAndDataProducaoFinal = AssyncHandler(async (req, res) => {
-  if (!req.params.dataProducaoInicial) {
+  if (!req.query.dataProducaoInicial) {
     res.status(400).json({
       description: "O parâmetro [dataProducaoInicial] deve ser preenchido!",
     });
   }
   if (
-    String(req.params.dataProducaoInicial)
+    String(req.query.dataProducaoInicial)
       .toLowerCase()
       .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
   ) {
     res.status(400).json({
-      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.params.dataProducao}!`,
+      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.query.dataProducaoInicial}!`,
     });
   }
-  if (!req.params.dataProducaoFinal) {
+  if (!req.query.dataProducaoFinal) {
     res.status(400).json({
       description: "O parâmetro [dataProducaoFinal] deve ser preenchido!",
     });
   }
   if (
-    String(req.params.dataProducaoFinal)
+    String(req.query.dataProducaoFinal)
       .toLowerCase()
       .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
   ) {
     res.status(400).json({
-      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.params.dataProducaoFinal}!`,
+      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.query.dataProducaoFinal}!`,
     });
   }
 
-  const dataProducaoInicial = new Date(req.params.dataProducaoInicial).toISOString();
-  const dataProducaoFinal = new Date(req.params.dataProducaoFinal).toISOString();
+  const dataProducaoInicial = new Date(req.query.dataProducaoInicial).toISOString();
+  const dataProducaoFinal = new Date(req.query.dataProducaoFinal).toISOString();
 
   if (new Date(dataProducaoInicial).getTime > new Date(dataProducaoFinal).getTime) {
     res.status(400).json({
@@ -218,43 +236,43 @@ const findProducoesByDataProducaoInicialAndDataProducaoFinal = AssyncHandler(asy
 });
 
 const findProducoesByFazendaAndDataProducaoInicialAndDataProducaoFinal = AssyncHandler(async (req, res) => {
-  if (!req.params.fazenda) {
+  if (!req.query.fazenda) {
     res.status(400).json({
       description: "O parâmetro [fazenda] deve ser preenchido!",
     });
   }
-  if (!req.params.dataProducaoInicial) {
+  if (!req.query.dataProducaoInicial) {
     res.status(400).json({
       description: "O parâmetro [dataProducaoInicial] deve ser preenchido!",
     });
   }
   if (
-    String(req.params.dataProducaoInicial)
+    String(req.query.dataProducaoInicial)
       .toLowerCase()
       .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
   ) {
     res.status(400).json({
-      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.params.dataProducao}!`,
+      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.query.dataProducaoInicial}!`,
     });
   }
-  if (!req.params.dataProducaoFinal) {
+  if (!req.query.dataProducaoFinal) {
     res.status(400).json({
       description: "O parâmetro [dataProducaoFinal] deve ser preenchido!",
     });
   }
   if (
-    String(req.params.dataProducaoFinal)
+    String(req.query.dataProducaoFinal)
       .toLowerCase()
       .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
   ) {
     res.status(400).json({
-      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.params.dataProducaoFinal}!`,
+      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.query.dataProducaoFinal}!`,
     });
   }
 
   const fazenda = String(req.params.fazenda);
-  const dataProducaoInicial = new Date(req.params.dataProducaoInicial).toISOString();
-  const dataProducaoFinal = new Date(req.params.dataProducaoFinal).toISOString();
+  const dataProducaoInicial = new Date(req.query.dataProducaoInicial).toISOString();
+  const dataProducaoFinal = new Date(req.query.dataProducaoFinal).toISOString();
 
   if (new Date(dataProducaoInicial).getTime > new Date(dataProducaoFinal).getTime) {
     res.status(400).json({
@@ -293,43 +311,43 @@ const findProducoesMensaisByFazendaAndAno = AssyncHandler(async (req, res) => {
 });
 
 const findProducoesByFazendeiroAndDataProducaoInicialAndDataProducaoFinal = AssyncHandler(async (req, res) => {
-  if (!req.params.fazendeiro) {
+  if (!req.query.fazendeiro) {
     res.status(400).json({
       description: "O parâmetro [fazendeiro] deve ser preenchido!",
     });
   }
-  if (!req.params.dataProducaoInicial) {
+  if (!req.query.dataProducaoInicial) {
     res.status(400).json({
       description: "O parâmetro [dataProducaoInicial] deve ser preenchido!",
     });
   }
   if (
-    String(req.params.dataProducaoInicial)
+    String(req.query.dataProducaoInicial)
       .toLowerCase()
       .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
   ) {
     res.status(400).json({
-      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.params.dataProducao}!`,
+      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.query.dataProducaoInicial}!`,
     });
   }
-  if (!req.params.dataProducaoFinal) {
+  if (!req.query.dataProducaoFinal) {
     res.status(400).json({
       description: "O parâmetro [dataProducaoFinal] deve ser preenchido!",
     });
   }
   if (
-    String(req.params.dataProducaoFinal)
+    String(req.query.dataProducaoFinal)
       .toLowerCase()
       .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
   ) {
     res.status(400).json({
-      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.params.dataProducaoFinal}!`,
+      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.query.dataProducaoFinal}!`,
     });
   }
 
-  const fazendeiro = String(req.params.fazendeiro);
-  const dataProducaoInicial = new Date(req.params.dataProducaoInicial).toISOString();
-  const dataProducaoFinal = new Date(req.params.dataProducaoFinal).toISOString();
+  const fazendeiro = String(req.query.fazendeiro);
+  const dataProducaoInicial = new Date(req.query.dataProducaoInicial).toISOString();
+  const dataProducaoFinal = new Date(req.query.dataProducaoFinal).toISOString();
 
   if (new Date(dataProducaoInicial).getTime > new Date(dataProducaoFinal).getTime) {
     res.status(400).json({
@@ -368,6 +386,25 @@ const findProducoesMensaisByFazendeiroAndAno = AssyncHandler(async (req, res) =>
 });
 
 const findProducoesByParams = AssyncHandler(async (req, res) => {
+  if (req.query.dataProducaoInicial && req.query.dataProducaoFinal && !req.query.fazendeiro && !req.query.fazenda && !req.query.ano && !req.query.mes) {
+    findProducoesByDataProducaoInicialAndDataProducaoFinal(req, res);
+  } else if (req.query.dataProducaoInicial && req.query.dataProducaoFinal && !req.query.fazendeiro && req.query.fazenda && !req.query.ano && !req.query.mes) {
+    findProducoesByFazendaAndDataProducaoInicialAndDataProducaoFinal(req, res);
+  } else if (!req.query.dataProducaoInicial && !req.query.dataProducaoFinal && !req.query.fazendeiro && req.query.fazenda && req.query.ano && req.query.mes) {
+    findProducoesByFazendaAndAnoAndMes(req, res);
+  } else if (!req.query.dataProducaoInicial && !req.query.dataProducaoFinal && !req.query.fazendeiro && req.query.fazenda && req.query.ano && !req.query.mes) {
+    findProducoesMensaisByFazendaAndAno(req, res);
+  } else if (req.query.dataProducaoInicial && req.query.dataProducaoFinal && req.query.fazendeiro && !req.query.fazenda && !req.query.ano && !req.query.mes) {
+    findProducoesByFazendeiroAndDataProducaoInicialAndDataProducaoFinal(req, res);
+  } else if (!req.query.dataProducaoInicial && !req.query.dataProducaoFinal && req.query.fazendeiro && !req.query.fazenda && req.query.ano && req.query.mes) {
+    findProducoesByFazendeiroAndAnoAndMes(req, res);
+  } else if (!req.query.dataProducaoInicial && !req.query.dataProducaoFinal && req.query.fazendeiro && !req.query.fazenda && req.query.ano && !req.query.mes) {
+    findProducoesMensaisByFazendeiroAndAno(req, res);
+  } else {
+    res.status(400).json({
+      description: "Parâmetros inválidos!",
+    });
+  }
 });
 
 module.exports = {

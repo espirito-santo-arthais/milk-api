@@ -10,7 +10,7 @@ const {
   findFazendeirosByParams,
 } = require("../controllers/fazendeiro-controller");
 
-routes.get("/", createFazendeiro);
+routes.post("/", createFazendeiro);
 routes.patch("/:id", updateFazendeiro);
 routes.delete("/:id", deleteFazendeiro);
 routes.get("/:id", findFazendeiroById);

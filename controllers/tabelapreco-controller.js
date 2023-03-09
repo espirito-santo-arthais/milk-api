@@ -8,7 +8,7 @@ function validade(req, res) {
     });
   }
 
-  if (!isNumeric(String(req.body.ano).replaceAll(",", "."))) {
+  if (isNaN(String(req.body.ano).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [ano] deve conter um valor numérico!",
     });
@@ -32,7 +32,7 @@ function validade(req, res) {
     });
   }
 
-  if (!isNumeric(String(req.body.semestre).replaceAll(",", "."))) {
+  if (isNaN(String(req.body.semestre).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [semestre] deve conter um valor numérico!",
     });
@@ -56,7 +56,7 @@ function validade(req, res) {
     });
   }
 
-  if (!isNumeric(String(req.body.precoBasePorLitro).replaceAll(",", "."))) {
+  if (isNaN(String(req.body.precoBasePorLitro).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [precoBasePorLitro] deve conter um valor numérico!",
     });
@@ -77,7 +77,7 @@ function validade(req, res) {
     });
   }
 
-  if (!isNumeric(String(req.body.custoPorKmAte50Km).replaceAll(",", "."))) {
+  if (isNaN(String(req.body.custoPorKmAte50Km).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [custoPorKmAte50Km] deve conter um valor numérico!",
     });
@@ -98,7 +98,7 @@ function validade(req, res) {
     });
   }
 
-  if (!isNumeric(String(req.body.custoPorKmAcimaDe50Km).replaceAll(",", "."))) {
+  if (isNaN(String(req.body.custoPorKmAcimaDe50Km).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [custoPorKmAcimaDe50Km] deve conter um valor numérico!",
     });
@@ -119,7 +119,7 @@ function validade(req, res) {
     });
   }
 
-  if (!isNumeric(String(req.body.bonusPorProducaoAcimaDe10000L).replaceAll(",", "."))) {
+  if (isNaN(String(req.body.bonusPorProducaoAcimaDe10000L).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [bonusPorProducaoAcimaDe10000L] deve conter um valor numérico!",
     });
@@ -168,9 +168,19 @@ const createTabelaPreco = AssyncHandler(async (req, res) => {
 });
 
 const updateTabelaPreco = AssyncHandler(async (req, res) => {
+  if (!req.params.id) {
+    res.status(400).json({
+      description: "O parâmetro [id] deve ser preenchido!",
+    });
+  }
   if (!req.body.id) {
     res.status(400).json({
       description: "O campo [id] deve ser preenchido!",
+    });
+  }
+  if (req.params.id !== req.body.id) {
+    res.status(400).json({
+      description: `O parâmetro [id] não pode ser diferente do campo [id]: ${req.params.id} !== ${req.body.id}`,
     });
   }
   validade(req, res);
@@ -178,13 +188,13 @@ const updateTabelaPreco = AssyncHandler(async (req, res) => {
   const tabelaPrecoMap = buildMap(req);
 
   // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
-  const tabelaPreco = await TabelaPreco.update(
-    tabelaPrecoMap,
+  const tabelaPreco = await TabelaPreco.findByIdAndUpdate(
     {
       where: { id: tabelaPrecoMap._id },
     },
+    tabelaPrecoMap,
     {
-      new: true,
+      returnDocument: 'after'
     }
   );
 
@@ -232,37 +242,48 @@ const findTabelaPrecoById = AssyncHandler(async (req, res) => {
 
   const id = String(req.params.id);
 
-  const tabelaPreco = await TabelaPreco.findByPk(id);
+  try {
+    const tabelaPreco = await TabelaPreco.findById(id);
 
-  res.status(200).json({
-    description: "Tabela de preço obtida com sucesso!",
-    data: tabelaPreco,
-  });
+    if (producao) {
+      res.status(200).json({
+        description: "Tabela de preço obtida com sucesso!",
+        data: tabelaPreco,
+      });
+    } else {
+      res.status(404).json({
+        description: "Tabela de preço não encontrada!",
+        data: fazenda,
+      });
+    }
+  } catch (e) {
+    console.log(e); // Logs the error
+  }
 });
 
-const findTabelaPrecoByAno = AssyncHandler(async (req, res) => {
-  if (!req.params.ano) {
+const findTabelasPrecosByAno = AssyncHandler(async (req, res) => {
+  if (!req.query.ano) {
     res.status(400).json({
       description: "O parâmetro [ano] deve ser preenchido!",
     });
   }
-  if (!isNumeric(String(req.params.ano).replaceAll(",", "."))) {
+  if (isNaN(String(req.query.ano).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O parâmetro [ano] deve conter um valor numérico!",
     });
   }
-  if (Number.isInteger(req.params.ano).replaceAll(",", ".")) {
+  if (Number.isInteger(req.query.ano).replaceAll(",", ".")) {
     res.status(400).json({
       description: "O parâmetro [ano] deve conter um valor numérico inteiro!",
     });
   }
-  if (parseInt(req.params.ano) < 1900 || parseInt(req.params.ano) > 9999) {
+  if (parseInt(req.query.ano) < 1900 || parseInt(req.query.ano) > 9999) {
     res.status(400).json({
       description: "O parâmetro [ano] contem um valor fora dos limites esperados: 1900 <= ano <= 9999!",
     });
   }
 
-  const ano = parseInt(req.params.ano);
+  const ano = parseInt(req.query.ano);
 
   const tabelaPrecoList = await TabelaPreco.find({ ano: ano });
 
@@ -273,49 +294,49 @@ const findTabelaPrecoByAno = AssyncHandler(async (req, res) => {
 });
 
 const findTabelaPrecoByAnoAndSemetre = AssyncHandler(async (req, res) => {
-  if (!req.params.ano) {
+  if (!req.query.ano) {
     res.status(400).json({
       description: "O parâmetro [ano] deve ser preenchido!",
     });
   }
-  if (!isNumeric(String(req.params.ano).replaceAll(",", "."))) {
+  if (isNaN(String(req.query.ano).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O parâmetro [ano] deve conter um valor numérico!",
     });
   }
-  if (Number.isInteger(req.params.ano).replaceAll(",", ".")) {
+  if (Number.isInteger(req.query.ano).replaceAll(",", ".")) {
     res.status(400).json({
       description: "O parâmetro [ano] deve conter um valor numérico inteiro!",
     });
   }
-  if (parseInt(req.params.ano) < 1900 || parseInt(req.params.ano) > 9999) {
+  if (parseInt(req.query.ano) < 1900 || parseInt(req.query.ano) > 9999) {
     res.status(400).json({
       description: "O parâmetro [ano] contem um valor fora dos limites esperados: 1900 <= ano <= 9999!",
     });
   }
-  if (!req.params.semestre) {
+  if (!req.query.semestre) {
     res.status(400).json({
       description: "O parâmetro [semestre] deve ser preenchido!",
     });
   }
-  if (!isNumeric(String(req.params.semestre).replaceAll(",", "."))) {
+  if (isNaN(String(req.query.semestre).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O parâmetro [semestre] deve conter um valor numérico!",
     });
   }
-  if (Number.isInteger(req.params.semestre).replaceAll(",", ".")) {
+  if (Number.isInteger(req.query.semestre).replaceAll(",", ".")) {
     res.status(400).json({
       description: "O parâmetro [semestre] deve conter um valor numérico inteiro!",
     });
   }
-  if (parseInt(req.params.semestre) < 1 || parseInt(req.params.semestre) > 2) {
+  if (parseInt(req.query.semestre) < 1 || parseInt(req.query.semestre) > 2) {
     res.status(400).json({
       description: "O parâmetro [semestre] contem um valor fora dos limites esperados: 1 <= semestre <= 12!",
     });
   }
 
-  const ano = parseInt(req.params.ano);
-  const semestre = parseInt(req.params.semestre);
+  const ano = parseInt(req.query.ano);
+  const semestre = parseInt(req.query.semestre);
 
   const tabelaPrecoList = await TabelaPreco.find({ ano: ano, semestre: semestre });
 
@@ -326,6 +347,17 @@ const findTabelaPrecoByAnoAndSemetre = AssyncHandler(async (req, res) => {
 });
 
 const findTabelasPrecosByParams = AssyncHandler(async (req, res) => {
+  if (!req.query.ano && !req.query.semestre) {
+    findAllTabelasPrecos(req, res);
+  } else if (req.query.ano && !req.query.semestre) {
+    findTabelasPrecosByAno(req, res);
+  } else if (req.query.ano && req.query.semestre) {
+    findTabelaPrecoByAnoAndSemetre(req, res);
+  } else {
+    res.status(400).json({
+      description: "Parâmetros inválidos!",
+    });
+  }
 });
 
 module.exports = {

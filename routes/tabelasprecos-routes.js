@@ -10,7 +10,7 @@ const {
     findTabelasPrecosByParams,
 } = require("../controllers/tabelapreco-controller");
 
-routes.get("/", createTabelaPreco);
+routes.post("/", createTabelaPreco);
 routes.patch("/:id", updateTabelaPreco);
 routes.delete("/:id", deleteTabelaPreco);
 routes.get("/:id", findTabelaPrecoById);

@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const colors = require("colors");
 const dbConnectionString = require("./config/config");
+const { errorHandler } = require("./middleware/error-handler");
 
 const app = express();
 
@@ -59,3 +60,6 @@ app.use("/milk/producoes", require("./routes/producoes-routes"));
 
 // roteador das tabelas de precos
 app.use("/milk/tabelas-de-precos", require("./routes/tabelasprecos-routes"));
+
+// Manipulador de erros
+app.use(errorHandler);

@@ -3,9 +3,9 @@ const Fazendeiro = require("../models/Fazendeiro");
 const Fazenda = require("../models/Fazenda");
 
 function validade(req, res) {
-  if (!req.body.name) {
+  if (!req.body.nome) {
     res.status(400).json({
-      description: "O campo [name] deve ser preenchido!",
+      description: "O campo [nome] deve ser preenchido!",
     });
   }
 
@@ -15,7 +15,7 @@ function validade(req, res) {
     });
   }
 
-  const fazendeiroTemp = Fazendeiro.findByPk(String(req.body.fazendeiro));
+  const fazendeiroTemp = Fazendeiro.findById(String(req.body.fazendeiro));
   if (!fazendeiroTemp) {
     res.status(400).json({
       description: "Fazendeiro não encontrado!",
@@ -28,7 +28,7 @@ function validade(req, res) {
     });
   }
 
-  if (!isNumeric(String(req.body.distanciaEmKm).replaceAll(",", "."))) {
+  if (isNaN(String(req.body.distanciaEmKm).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [distanciaEmKm] deve conter um valor numérico!",
     });
@@ -45,7 +45,7 @@ function validade(req, res) {
 function buildMap(req) {
   const fazendaMap = {
     _id: req.body.id ? String(req.body.id) : undefined,
-    name: String(req.body.name),
+    nome: String(req.body.nome),
     fazendeiro: String(req.body.fazendeiro),
     distanciaEmKm: parseFloat(req.body.distanciaEmKm),
   };
@@ -72,9 +72,19 @@ const createFazenda = AssyncHandler(async (req, res) => {
 });
 
 const updateFazenda = AssyncHandler(async (req, res) => {
+  if (!req.params.id) {
+    res.status(400).json({
+      description: "O parâmetro [id] deve ser preenchido!",
+    });
+  }
   if (!req.body.id) {
     res.status(400).json({
       description: "O campo [id] deve ser preenchido!",
+    });
+  }
+  if (req.params.id !== req.body.id) {
+    res.status(400).json({
+      description: `O parâmetro [id] não pode ser diferente do campo [id]: ${req.params.id} !== ${req.body.id}`,
     });
   }
   validade(req, res);
@@ -82,13 +92,13 @@ const updateFazenda = AssyncHandler(async (req, res) => {
   const fazendaMap = buildMap(req);
 
   // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
-  const fazenda = await Fazenda.update(
-    fazendaMap,
+  const fazenda = await Fazenda.findByIdAndUpdate(
     {
       where: { id: fazendaMap._id },
     },
+    fazendaMap,
     {
-      new: true,
+      returnDocument: 'after'
     }
   );
 
@@ -136,26 +146,42 @@ const findFazendaById = AssyncHandler(async (req, res) => {
 
   const id = String(req.params.id);
 
-  // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
-  const fazenda = await Fazenda.findByPk(id);
 
-  res.status(200).json({
-    description: "Fazenda obtida com sucesso!",
-    data: fazenda,
-  });
+
+  try {
+    const fazenda = await Fazenda.findById(id);
+
+    if (fazenda) {
+      res.status(200).json({
+        description: "Fazenda obtida com sucesso!",
+        data: fazenda,
+      });
+    } else {
+      res.status(404).json({
+        description: "Fazenda não encontrada!",
+        data: fazenda,
+      });
+    }
+  } catch (e) {
+    console.log(e); // Logs the error
+    res.status(500).json({
+      description: "Fazenda não encontrada!",
+      data: fazenda,
+    });
+  }
 });
 
-const findFazendaByName = AssyncHandler(async (req, res) => {
-  if (!req.params.name) {
+const findFazendasByNome = AssyncHandler(async (req, res) => {
+  if (!req.query.nome) {
     res.status(400).json({
-      description: "O parâmetro [name] deve ser preenchido!",
+      description: "O parâmetro [nome] deve ser preenchido!",
     });
   }
 
-  const name = String(req.params.name);
+  const nome = String(req.params.nome);
 
   // TODO: verificar qual o valor retornado quando não existirem registros que satisfaçam a seleção.
-  const fazendaList = await Fazenda.find({ name: new RegExp('^' + name + '$', "i") });
+  const fazendaList = await Fazenda.find({ nome: new RegExp('^' + nome + '$', "i") });
 
   res.status(200).json({
     description: "Dados das fazendas obtidos com sucesso!",
@@ -164,31 +190,29 @@ const findFazendaByName = AssyncHandler(async (req, res) => {
 });
 
 const findFazendasByDistanciaEmKmInicialAndDistanciaEmKmFinal = AssyncHandler(async (req, res) => {
-  if (!req.params.distanciaEmKmInicial) {
+  if (!req.query.distanciaEmKmInicial) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmInicial] deve ser preenchido!",
     });
   }
-  if (
-    !isNumeric(String(req.body.distanciaEmKmInicial).replaceAll(",", "."))
-  ) {
+  if (isNaN(String(req.query.distanciaEmKmInicial).replaceAll(",", "."))) {
     res.status(400).json({
-      description: "O campo [distanciaEmKmInicial] deve conter um valor numérico!",
+      description: "O parâmetro [distanciaEmKmInicial] deve conter um valor numérico!",
     });
   }
-  if (!req.params.distanciaEmKmFinal) {
+  if (!req.query.distanciaEmKmFinal) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmFinal] deve ser preenchido!",
     });
   }
-  if (!isNumeric(String(req.body.distanciaEmKmFinal).replaceAll(",", "."))) {
+  if (isNaN(String(req.query.distanciaEmKmFinal).replaceAll(",", "."))) {
     res.status(400).json({
-      description: "O campo [distanciaEmKmFinal] deve conter um valor numérico!",
+      description: "O parâmetro [distanciaEmKmFinal] deve conter um valor numérico!",
     });
   }
 
-  const distanciaEmKmInicial = parseFloat(req.params.distanciaEmKmInicial);
-  const distanciaEmKmFinal = parseFloat(req.params.distanciaEmKmFinal);
+  const distanciaEmKmInicial = parseFloat(req.query.distanciaEmKmInicial);
+  const distanciaEmKmFinal = parseFloat(req.query.distanciaEmKmFinal);
 
   if (distanciaEmKmInicial > distanciaEmKmFinal) {
     res.status(400).json({
@@ -208,7 +232,7 @@ const findFazendasByDistanciaEmKmInicialAndDistanciaEmKmFinal = AssyncHandler(as
 });
 
 const findFazendasByFazendeiro = AssyncHandler(async (req, res) => {
-  if (!req.params.fazendeiro) {
+  if (!req.query.fazendeiro) {
     res.status(400).json({
       description: "O parâmetro [fazendeiro] deve ser preenchido!",
     });
@@ -228,37 +252,36 @@ const findFazendasByFazendeiro = AssyncHandler(async (req, res) => {
 });
 
 const findFazendasByFazendeiroAndDistanciaEmKmInicialAndDistanciaEmKmFinal = AssyncHandler(async (req, res) => {
-  if (!req.params.fazendeiro) {
+  if (!req.query.fazendeiro) {
     res.status(400).json({
       description: "O parâmetro [fazendeiro] deve ser preenchido!",
     });
   }
-  if (!req.params.distanciaEmKmInicial) {
+  if (!req.query.distanciaEmKmInicial) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmInicial] deve ser preenchido!",
     });
   }
-  if (
-    !isNumeric(String(req.body.distanciaEmKmInicial).replaceAll(",", "."))
+  if (isNaN(String(req.query.distanciaEmKmInicial).replaceAll(",", "."))
   ) {
     res.status(400).json({
       description: "O campo [distanciaEmKmInicial] deve conter um valor numérico!",
     });
   }
-  if (!req.params.distanciaEmKmFinal) {
+  if (!req.query.distanciaEmKmFinal) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmFinal] deve ser preenchido!",
     });
   }
-  if (!isNumeric(String(req.body.distanciaEmKmFinal).replaceAll(",", "."))) {
+  if (isNaN(String(req.query.distanciaEmKmFinal).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [distanciaEmKmFinal] deve conter um valor numérico!",
     });
   }
 
-  const fazendeiro = String(req.params.fazendeiro);
-  const distanciaEmKmInicial = parseFloat(req.params.distanciaEmKmInicial);
-  const distanciaEmKmFinal = parseFloat(req.params.distanciaEmKmFinal);
+  const fazendeiro = String(req.query.fazendeiro);
+  const distanciaEmKmInicial = parseFloat(req.query.distanciaEmKmInicial);
+  const distanciaEmKmFinal = parseFloat(req.query.distanciaEmKmFinal);
 
   if (distanciaEmKmInicial > distanciaEmKmFinal) {
     res.status(400).json({
@@ -279,6 +302,21 @@ const findFazendasByFazendeiroAndDistanciaEmKmInicialAndDistanciaEmKmFinal = Ass
 });
 
 const findFazendasByParams = AssyncHandler(async (req, res) => {
+  if (!req.query.nome && !req.query.distanciaEmKmInicial && !req.query.distanciaEmKmFinal && !req.query.fazendeiro) {
+    findAllFazendas(req, res);
+  } else if (req.query.nome && !req.query.distanciaEmKmInicial && !req.query.distanciaEmKmFinal && !req.query.fazendeiro) {
+    findFazendasByNome(req, res);
+  } else if (!req.query.nome && req.query.distanciaEmKmInicial && req.query.distanciaEmKmFinal && !req.query.fazendeiro) {
+    findFazendasByDistanciaEmKmInicialAndDistanciaEmKmFinal(req, res);
+  } else if (!req.query.nome && !req.query.distanciaEmKmInicial && !req.query.distanciaEmKmFinal && req.query.fazendeiro) {
+    findFazendasByFazendeiro(req, res);
+  } else if (!req.query.nome && req.query.distanciaEmKmInicial && req.query.distanciaEmKmFinal && req.query.fazendeiro) {
+    findFazendasByFazendeiroAndDistanciaEmKmInicialAndDistanciaEmKmFinal(req, res);
+  } else {
+    res.status(400).json({
+      description: "Parâmetros inválidos!",
+    });
+  }
 });
 
 module.exports = {

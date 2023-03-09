@@ -1,10 +1,8 @@
 const mongoose = require("mongoose");
-const fazendeiro = require("./Fazendeiro");
 
 const fazendaSchema = new mongoose.Schema({
-  name: {
+  nome: {
     type: String,
-    required: true,
   },
   fazendeiro: {
     type: {
@@ -14,7 +12,6 @@ const fazendaSchema = new mongoose.Schema({
   },
   distanciaEmKm: {
     type: Number,
-    required: true,
   },
 });
 

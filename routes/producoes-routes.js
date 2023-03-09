@@ -10,7 +10,7 @@ const {
   findProducoesByParams,
 } = require("../controllers/producao-controller");
 
-routes.get("/", createProducao);
+routes.post("/", createProducao);
 routes.patch("/:id", updateProducao);
 routes.delete("/:id", deleteProducao);
 routes.get("/:id", findProducaoById);

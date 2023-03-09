@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const fazenda = require("./Fazenda");
 
 const producaoSchema = new mongoose.Schema({
   fazendeiro: {
@@ -16,11 +15,9 @@ const producaoSchema = new mongoose.Schema({
   },
   dataProducao: {
     type: Date,
-    required: true,
   },
   litrosProduzidos: {
     type: Number,
-    required: true,
   },
 });
 

@@ -2,9 +2,9 @@ const AssyncHandler = require("express-async-handler");
 const Fazendeiro = require("../models/Fazendeiro");
 
 function validade(req, res) {
-  if (!req.body.name) {
+  if (!req.body.nome) {
     res.status(400).json({
-      description: "O campo [name] deve ser preenchido!",
+      description: "O campo [nome] deve ser preenchido!",
     });
   }
 
@@ -15,7 +15,7 @@ function validade(req, res) {
   }
 
   if (
-    String(req.body.email)
+    !String(req.body.email)
       .toLowerCase()
       .match(
         /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -29,8 +29,8 @@ function validade(req, res) {
 
 function buildMap(req) {
   const fazendeiroMap = {
-    _id: req.body.id ? String(req.body.id) : undefined,
-    name: String(req.body.name),
+    id: req.body.id ? String(req.body.id) : undefined,
+    nome: String(req.body.nome),
     email: String(req.body.email),
   };
 
@@ -56,9 +56,19 @@ const createFazendeiro = AssyncHandler(async (req, res) => {
 });
 
 const updateFazendeiro = AssyncHandler(async (req, res) => {
+  if (!req.params.id) {
+    res.status(400).json({
+      description: "O parâmetro [id] deve ser preenchido!",
+    });
+  }
   if (!req.body.id) {
     res.status(400).json({
       description: "O campo [id] deve ser preenchido!",
+    });
+  }
+  if (req.params.id !== req.body.id) {
+    res.status(400).json({
+      description: `O parâmetro [id] não pode ser diferente do campo [id]: ${req.params.id} !== ${req.body.id}`,
     });
   }
   validade(req, res);
@@ -66,13 +76,13 @@ const updateFazendeiro = AssyncHandler(async (req, res) => {
   const fazendeiroMap = buildMap(req);
 
   // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
-  const fazendeiro = await Fazendeiro.update(
+  const fazendeiro = await Fazendeiro.findByIdAndUpdate(
+    {
+      _id: fazendeiroMap.id,
+    },
     fazendeiroMap,
     {
-      where: { id: fazendeiroMap._id },
-    },
-    {
-      new: true,
+      returnDocument: 'after'
     }
   );
 
@@ -120,25 +130,32 @@ const findFazendeiroById = AssyncHandler(async (req, res) => {
 
   const id = String(req.params.id);
 
-  const fazendeiro = await Fazendeiro.findByPk(id);
+  const fazendeiro = await Fazendeiro.findById(id);
 
-  res.status(200).json({
-    description: "Fazendeiro obtido com sucesso!",
-    data: fazendeiro,
-  });
+  if (fazendeiro) {
+    res.status(200).json({
+      description: "Fazendeiro obtido com sucesso!",
+      data: fazendeiro,
+    });
+  } else {
+    res.status(404).json({
+      description: "Fazendeiro não encontrado!",
+      data: fazenda,
+    });
+  }
 });
 
-const findFazendeiroByName = AssyncHandler(async (req, res) => {
-  if (!req.params.name) {
+const findFazendeirosByNome = AssyncHandler(async (req, res) => {
+  if (!req.params.nome) {
     res.status(400).json({
-      description: "O parâmetro [name] deve ser preenchido!",
+      description: "O parâmetro [nome] deve ser preenchido!",
     });
   }
 
-  const name = String(req.params.name);
+  const nome = String(req.params.nome);
 
   // TODO: verificar qual o valor retornado quando não existirem registros que satisfaçam a seleção.
-  const fazendeiroList = await Fazendeiro.find({ name: new RegExp('^' + name + '$', "i") });
+  const fazendeiroList = await Fazendeiro.find({ nome: new RegExp('^' + nome + '$', "i") });
 
   res.status(200).json({
     description: "Dados dos fazendeiros obtidos com sucesso!",
@@ -146,7 +163,7 @@ const findFazendeiroByName = AssyncHandler(async (req, res) => {
   });
 });
 
-const findFazendeiroByEmail = AssyncHandler(async (req, res) => {
+const findFazendeirosByEmail = AssyncHandler(async (req, res) => {
   if (!req.params.email) {
     res.status(400).json({
       description: "O parâmetro [email] deve ser preenchido!",
@@ -165,6 +182,17 @@ const findFazendeiroByEmail = AssyncHandler(async (req, res) => {
 });
 
 const findFazendeirosByParams = AssyncHandler(async (req, res) => {
+  if (!req.query.nome && !req.query.email) {
+    findAllFazendeiros(req, res);
+  } else if (req.query.nome && !req.query.email) {
+    findFazendeirosByNome(req, res);
+  } else if (!req.query.nome && req.query.email) {
+    findFazendeirosByEmail(req, res);
+  } else {
+    res.status(400).json({
+      description: "Parâmetros inválidos!",
+    });
+  }
 });
 
 module.exports = {
