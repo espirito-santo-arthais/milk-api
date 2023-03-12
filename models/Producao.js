@@ -2,16 +2,10 @@ const mongoose = require("mongoose");
 
 const producaoSchema = new mongoose.Schema({
   fazendeiro: {
-    type: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "fazendeiro",
-    }
+    type: String,
   },
   fazenda: {
-    type: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "fazenda",
-    }
+    type: String,
   },
   dataProducao: {
     type: Date,

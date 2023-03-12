@@ -5,10 +5,7 @@ const fazendaSchema = new mongoose.Schema({
     type: String,
   },
   fazendeiro: {
-    type: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "fazendeiro",
-    }
+    type: String,
   },
   distanciaEmKm: {
     type: Number,

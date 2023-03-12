@@ -1,73 +1,117 @@
 const AssyncHandler = require("express-async-handler");
 const Fazendeiro = require("../models/Fazendeiro");
 const Fazenda = require("../models/Fazenda");
+const Producao = require("../models/Producao");
 
-function validade(req, res) {
+const validade = AssyncHandler(async (req, res) => {
   if (!req.body.nome) {
     res.status(400).json({
       description: "O campo [nome] deve ser preenchido!",
     });
+    return;
   }
 
   if (!req.body.fazendeiro) {
     res.status(400).json({
       description: "O campo [fazendeiro] deve ser preenchido!",
     });
+    return;
   }
 
-  const fazendeiroTemp = Fazendeiro.findById(String(req.body.fazendeiro));
+  const fazendeiroTemp = await Fazendeiro.findById(String(req.body.fazendeiro));
   if (!fazendeiroTemp) {
     res.status(400).json({
       description: "Fazendeiro não encontrado!",
     });
+    return;
   }
 
   if (!req.body.distanciaEmKm) {
     res.status(400).json({
       description: "O campo [distanciaEmKm] deve ser preenchido!",
     });
+    return;
   }
 
   if (isNaN(String(req.body.distanciaEmKm).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [distanciaEmKm] deve conter um valor numérico!",
     });
+    return;
   }
 
   if (parseFloat(req.body.distanciaEmKm) < 1 || parseFloat(req.body.distanciaEmKm) > 1000) {
     res.status(400).json({
-      description:
-        "O campo [distanciaEmKm] contem um valor fora dos limites esperados: 1 <= distanciaEmKm <= 1000!",
+      description: "O campo [distanciaEmKm] contem um valor fora dos limites esperados: 1 <= distanciaEmKm <= 1000!",
     });
+    return;
   }
-}
+});
 
-function buildMap(req) {
+const buildMap = AssyncHandler(async (req) => {
   const fazendaMap = {
-    _id: req.body.id ? String(req.body.id) : undefined,
+    id: req.body.id ? String(req.body.id) : undefined,
     nome: String(req.body.nome),
     fazendeiro: String(req.body.fazendeiro),
     distanciaEmKm: parseFloat(req.body.distanciaEmKm),
   };
 
   return fazendaMap;
-}
+});
+
+const getFazendaOut = AssyncHandler(async (fazenda) => {
+  const fazendeiro = await Fazendeiro.findById(fazenda.fazendeiro);
+
+  const fazendeiroOut = {
+    id: fazendeiro._id,
+    nome: fazendeiro.nome,
+    email: fazendeiro.email,
+  }
+
+  const fazendaOut = {
+    id: fazenda._id,
+    nome: fazenda.nome,
+    fazendeiro: fazendeiroOut,
+    distanciaEmKm: fazenda.distanciaEmKm,
+    distanciaEmKmFormatted: new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(fazenda.distanciaEmKm),
+  }
+
+  return fazendaOut;
+});
+
+const summary = AssyncHandler(async (res, fazendaList) => {
+  if (fazendaList.length > 0) {
+    for (let i = 0; i < fazendaList.length; i++) {
+      fazendaList[i] = await getFazendaOut(fazendaList[i]);
+    }
+    res.status(200).json({
+      description: "Dados das fazendas obtidos com sucesso!",
+      data: fazendaList,
+    });
+  } else {
+    res.status(404).json({
+      description: "Fazendas não encontradas!"
+    });
+  }
+});
 
 const createFazenda = AssyncHandler(async (req, res) => {
   if (req.body.id) {
     res.status(400).json({
       description: "O campo [id] não deve ser preenchido!",
     });
+    return;
   }
-  validade(req, res);
+  await validade(req, res);
 
-  const fazendaMap = buildMap(req);
+  const fazendaMap = await buildMap(req);
 
-  const fazenda = await Fazenda.create(fazendaMap, { new: true });
+  const fazenda = await Fazenda.create(fazendaMap);
 
-  res.status(200).json({
+  const fazendaOut = await getFazendaOut(fazenda);
+  res.status(201).json({
     description: "Dados da fazenda salvos com sucesso!",
-    data: fazenda,
+    data: fazendaOut,
   });
 });
 
@@ -76,25 +120,27 @@ const updateFazenda = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [id] deve ser preenchido!",
     });
+    return;
   }
   if (!req.body.id) {
     res.status(400).json({
       description: "O campo [id] deve ser preenchido!",
     });
+    return;
   }
   if (req.params.id !== req.body.id) {
     res.status(400).json({
       description: `O parâmetro [id] não pode ser diferente do campo [id]: ${req.params.id} !== ${req.body.id}`,
     });
+    return;
   }
-  validade(req, res);
+  await validade(req, res);
 
-  const fazendaMap = buildMap(req);
+  const fazendaMap = await buildMap(req);
 
-  // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
   const fazenda = await Fazenda.findByIdAndUpdate(
     {
-      where: { id: fazendaMap._id },
+      _id: fazendaMap.id,
     },
     fazendaMap,
     {
@@ -102,10 +148,17 @@ const updateFazenda = AssyncHandler(async (req, res) => {
     }
   );
 
-  res.status(200).json({
-    description: "Dados da fazenda atualizados com sucesso!",
-    data: fazenda,
-  });
+  if (fazenda) {
+    const fazendaOut = await getFazendaOut(fazenda);
+    res.status(200).json({
+      description: "Dados da fazenda atualizados com sucesso!",
+      data: fazendaOut,
+    });
+  } else {
+    res.status(404).json({
+      description: "Fazenda não encontrada!",
+    });
+  }
 });
 
 const deleteFazenda = AssyncHandler(async (req, res) => {
@@ -113,28 +166,41 @@ const deleteFazenda = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [id] deve ser preenchido!",
     });
+    return;
+  }
+  const producaoList = await Producao.find({ fazenda: req.params.id, });
+  if (producaoList.length > 0) {
+    res.status(400).json({
+      description: `Fazenda possui ${producaoList.length} produções de leite, não pode ser excluída!`,
+    });
+    return;
   }
 
   const id = String(req.params.id);
 
-  // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
-  const fazenda = await Fazenda.destroy({
-    where: { id: id },
-  });
+  const fazenda = await Fazenda.findByIdAndDelete(id);
 
-  res.status(200).json({
-    description: "Fazenda excluída com sucesso!",
-    data: fazenda,
-  });
+  if (fazenda) {
+    const fazendaOut = await getFazendaOut(fazenda);
+    res.status(200).json({
+      description: "Fazenda excluída com sucesso!",
+      data: fazendaOut,
+    });
+  } else {
+    res.status(404).json({
+      description: "Fazenda não encontrada!",
+    });
+  }
 });
 
 const findAllFazendas = AssyncHandler(async (req, res) => {
-  const fazendaList = await Fazenda.find({});
+  const fazendaList = await Fazenda
+    .find({})
+    .sort({
+      nome: 'asc'
+    });
 
-  res.status(200).json({
-    description: "Dados das fazendas obtidos com sucesso!",
-    data: fazendaList,
-  });
+  await summary(res, fazendaList);
 });
 
 const findFazendaById = AssyncHandler(async (req, res) => {
@@ -142,31 +208,22 @@ const findFazendaById = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [id] deve ser preenchido!",
     });
+    return;
   }
 
   const id = String(req.params.id);
 
+  const fazenda = await Fazenda.findById(id);
 
-
-  try {
-    const fazenda = await Fazenda.findById(id);
-
-    if (fazenda) {
-      res.status(200).json({
-        description: "Fazenda obtida com sucesso!",
-        data: fazenda,
-      });
-    } else {
-      res.status(404).json({
-        description: "Fazenda não encontrada!",
-        data: fazenda,
-      });
-    }
-  } catch (e) {
-    console.log(e); // Logs the error
-    res.status(500).json({
-      description: "Fazenda não encontrada!",
-      data: fazenda,
+  if (fazenda) {
+    const fazendaOut = await getFazendaOut(fazenda);
+    res.status(200).json({
+      description: "Fazenda obtida com sucesso!",
+      data: fazendaOut,
+    });
+  } else {
+    res.status(404).json({
+      description: "Fazenda não encontrada!"
     });
   }
 });
@@ -176,17 +233,20 @@ const findFazendasByNome = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [nome] deve ser preenchido!",
     });
+    return;
   }
 
-  const nome = String(req.params.nome);
+  const nome = String(req.query.nome);
 
-  // TODO: verificar qual o valor retornado quando não existirem registros que satisfaçam a seleção.
-  const fazendaList = await Fazenda.find({ nome: new RegExp('^' + nome + '$', "i") });
+  const fazendaList = await Fazenda
+    .find({
+      nome: { $regex: '.*' + nome + '.*', $options: 'i' }
+    })
+    .sort({
+      nome: 'asc'
+    });
 
-  res.status(200).json({
-    description: "Dados das fazendas obtidos com sucesso!",
-    data: fazendaList,
-  });
+  await summary(res, fazendaList);
 });
 
 const findFazendasByDistanciaEmKmInicialAndDistanciaEmKmFinal = AssyncHandler(async (req, res) => {
@@ -194,21 +254,25 @@ const findFazendasByDistanciaEmKmInicialAndDistanciaEmKmFinal = AssyncHandler(as
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmInicial] deve ser preenchido!",
     });
+    return;
   }
   if (isNaN(String(req.query.distanciaEmKmInicial).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmInicial] deve conter um valor numérico!",
     });
+    return;
   }
   if (!req.query.distanciaEmKmFinal) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmFinal] deve ser preenchido!",
     });
+    return;
   }
   if (isNaN(String(req.query.distanciaEmKmFinal).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmFinal] deve conter um valor numérico!",
     });
+    return;
   }
 
   const distanciaEmKmInicial = parseFloat(req.query.distanciaEmKmInicial);
@@ -218,17 +282,18 @@ const findFazendasByDistanciaEmKmInicialAndDistanciaEmKmFinal = AssyncHandler(as
     res.status(400).json({
       description: "Intervalo inválido: o valor do parâmetro [distanciaEmKmInicial] não pode ser maior que o valor do parâmetro [distanciaEmKmFinal]!",
     });
+    return;
   }
 
-  // TODO: verificar qual o valor retornado quando não existem registros que atandam a seleção.
-  const fazendaList = await Fazenda.find({
-    distanciaEmKm: { $gte: distanciaEmKmInicial, $lte: distanciaEmKmFinal },
-  });
+  const fazendaList = await Fazenda
+    .find({
+      distanciaEmKm: { $gte: distanciaEmKmInicial, $lte: distanciaEmKmFinal },
+    })
+    .sort({
+      distanciaEmKm: 'asc'
+    });
 
-  res.status(200).json({
-    description: "Dados das fazendas obtidos com sucesso!",
-    data: fazendaList,
-  });
+  await summary(res, fazendaList);
 });
 
 const findFazendasByFazendeiro = AssyncHandler(async (req, res) => {
@@ -236,19 +301,21 @@ const findFazendasByFazendeiro = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [fazendeiro] deve ser preenchido!",
     });
+    return;
   }
 
-  const fazendeiro = String(req.params.fazendeiro);
+  const fazendeiro = String(req.query.fazendeiro);
 
-  // TODO: verificar qual o valor retornado quando não existem registros que atandam a seleção.
-  const fazendaList = await Fazenda.find({
-    fazendeiro: fazendeiro,
-  });
+  const fazendaList = await Fazenda
+    .find({
+      fazendeiro: fazendeiro,
+    })
+    .sort({
+      fazendeiro: 'asc',
+      nome: 'asc'
+    });
 
-  res.status(200).json({
-    description: "Dados das fazendas obtidos com sucesso!",
-    data: fazendaList,
-  });
+  await summary(res, fazendaList);
 });
 
 const findFazendasByFazendeiroAndDistanciaEmKmInicialAndDistanciaEmKmFinal = AssyncHandler(async (req, res) => {
@@ -256,27 +323,31 @@ const findFazendasByFazendeiroAndDistanciaEmKmInicialAndDistanciaEmKmFinal = Ass
     res.status(400).json({
       description: "O parâmetro [fazendeiro] deve ser preenchido!",
     });
+    return;
   }
   if (!req.query.distanciaEmKmInicial) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmInicial] deve ser preenchido!",
     });
+    return;
   }
-  if (isNaN(String(req.query.distanciaEmKmInicial).replaceAll(",", "."))
-  ) {
+  if (isNaN(String(req.query.distanciaEmKmInicial).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [distanciaEmKmInicial] deve conter um valor numérico!",
     });
+    return;
   }
   if (!req.query.distanciaEmKmFinal) {
     res.status(400).json({
       description: "O parâmetro [distanciaEmKmFinal] deve ser preenchido!",
     });
+    return;
   }
   if (isNaN(String(req.query.distanciaEmKmFinal).replaceAll(",", "."))) {
     res.status(400).json({
       description: "O campo [distanciaEmKmFinal] deve conter um valor numérico!",
     });
+    return;
   }
 
   const fazendeiro = String(req.query.fazendeiro);
@@ -287,18 +358,20 @@ const findFazendasByFazendeiroAndDistanciaEmKmInicialAndDistanciaEmKmFinal = Ass
     res.status(400).json({
       description: "Intervalo inválido: o valor do parâmetro [distanciaEmKmInicial] não pode ser maior que o valor do parâmetro [distanciaEmKmFinal]!",
     });
+    return;
   }
 
-  // TODO: verificar qual o valor retornado quando não existem registros que atandam a seleção.
-  const fazendaList = await Fazenda.find({
-    fazendeiro: fazendeiro,
-    distanciaEmKm: { $gte: distanciaEmKmInicial, $lte: distanciaEmKmFinal },
-  });
+  const fazendaList = await Fazenda
+    .find({
+      fazendeiro: fazendeiro,
+      distanciaEmKm: { $gte: distanciaEmKmInicial, $lte: distanciaEmKmFinal },
+    })
+    .sort({
+      fazendeiro: 'asc',
+      distanciaEmKm: 'asc'
+    });
 
-  res.status(200).json({
-    description: "Dados das fazendas obtidos com sucesso!",
-    data: fazendaList,
-  });
+  await summary(res, fazendaList);
 });
 
 const findFazendasByParams = AssyncHandler(async (req, res) => {

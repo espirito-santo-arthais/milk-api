@@ -1,169 +1,195 @@
 const AssyncHandler = require("express-async-handler");
 const TabelaPreco = require("../models/TabelaPreco");
 
-function validade(req, res) {
+const validade = AssyncHandler(async (req, res) => {
   if (!req.body.ano) {
     res.status(400).json({
       description: "O campo [ano] deve ser preenchido!",
     });
+    return;
   }
-
-  if (isNaN(String(req.body.ano).replaceAll(",", "."))) {
+  const anoTemp = String(req.body.ano).replaceAll(",", ".");
+  if (isNaN(anoTemp)) {
     res.status(400).json({
       description: "O campo [ano] deve conter um valor numérico!",
     });
+    return;
   }
-
-  if (Number.isInteger(req.body.ano).replaceAll(",", ".")) {
-    res.status(400).json({
-      description: "O campo [ano] deve conter um valor numérico inteiro!",
-    });
-  }
-
-  if (parseInt(req.body.ano) < 1900 || parseInt(req.body.ano) > 9999) {
+  if (parseInt(anoTemp) < 1900 || parseInt(anoTemp) > 9999) {
     res.status(400).json({
       description: "O campo [ano] contem um valor fora dos limites esperados: 1900 <= ano <= 9999!",
     });
+    return;
   }
 
   if (!req.body.semestre) {
     res.status(400).json({
       description: "O campo [semestre] deve ser preenchido!",
     });
+    return;
   }
-
-  if (isNaN(String(req.body.semestre).replaceAll(",", "."))) {
+  const semestreTemp = String(req.body.semestre).replaceAll(",", ".");
+  if (isNaN(semestreTemp)) {
     res.status(400).json({
       description: "O campo [semestre] deve conter um valor numérico!",
     });
+    return;
   }
-
-  if (Number.isInteger(req.body.mes).replaceAll(",", ".")) {
-    res.status(400).json({
-      description: "O campo [semestre] deve conter um valor numérico inteiro!",
-    });
-  }
-
-  if (parseInt(req.body.semestre) < 1 || parseInt(req.body.semestre) > 2) {
+  if (parseInt(semestreTemp) < 1 || parseInt(semestreTemp) > 2) {
     res.status(400).json({
       description: "O campo [semestre] contem um valor fora dos limites esperados: 1 <= semestre <= 2!",
     });
+    return;
   }
 
   if (!req.body.precoBasePorLitro) {
     res.status(400).json({
       description: "O campo [precoBasePorLitro] deve ser preenchido!",
     });
+    return;
   }
-
-  if (isNaN(String(req.body.precoBasePorLitro).replaceAll(",", "."))) {
+  const precoBasePorLitroTemp = String(req.body.precoBasePorLitro).replaceAll(",", ".");
+  if (isNaN(precoBasePorLitroTemp)) {
     res.status(400).json({
       description: "O campo [precoBasePorLitro] deve conter um valor numérico!",
     });
+    return;
   }
-
-  if (
-    parseFloat(req.body.precoBasePorLitro) < 0.01 ||
-    parseFloat(req.body.precoBasePorLitro) > 999999999.99
-  ) {
+  if (parseFloat(precoBasePorLitroTemp) < 0.01 || parseFloat(precoBasePorLitroTemp) > 999999999.99) {
     res.status(400).json({
       description: "O campo [precoBasePorLitro] contem um valor fora dos limites esperados: R$0,01 <= precoBasePorLitro <= R$999.999.999,99!",
     });
+    return;
   }
 
-  if (!req.body.custoPorKmAte50Km) {
+  if (!req.body.custoDeslocamentoPorKmAte50Km) {
     res.status(400).json({
-      description: "O campo [custoPorKmAte50Km] deve ser preenchido!",
+      description: "O campo [custoDeslocamentoPorKmAte50Km] deve ser preenchido!",
     });
+    return;
+  }
+  const custoDeslocamentoPorKmAte50KmTemp = String(req.body.custoDeslocamentoPorKmAte50Km).replaceAll(",", ".");
+  if (isNaN(custoDeslocamentoPorKmAte50KmTemp)) {
+    res.status(400).json({
+      description: "O campo [custoDeslocamentoPorKmAte50Km] deve conter um valor numérico!",
+    });
+    return;
+  }
+  if (parseFloat(custoDeslocamentoPorKmAte50KmTemp) < 0 || parseFloat(custoDeslocamentoPorKmAte50KmTemp) > 999999999.99) {
+    res.status(400).json({
+      description: "O campo [custoDeslocamentoPorKmAte50Km] contem um valor fora dos limites esperados: R$0,01 <= custoDeslocamentoPorKmAte50Km <= R$999.999.999,99!",
+    });
+    return;
   }
 
-  if (isNaN(String(req.body.custoPorKmAte50Km).replaceAll(",", "."))) {
+  if (!req.body.custoDeslocamentoPorKmAcimaDe50Km) {
     res.status(400).json({
-      description: "O campo [custoPorKmAte50Km] deve conter um valor numérico!",
+      description: "O campo [custoDeslocamentoPorKmAcimaDe50Km] deve ser preenchido!",
     });
+    return;
   }
-
-  if (
-    parseFloat(req.body.custoPorKmAte50Km) < 0.01 ||
-    parseFloat(req.body.custoPorKmAte50Km) > 999999999.99
-  ) {
+  const custoDeslocamentoPorKmAcimaDe50KmTemp = String(req.body.custoDeslocamentoPorKmAcimaDe50Km).replaceAll(",", ".");
+  if (isNaN(custoDeslocamentoPorKmAcimaDe50KmTemp)) {
     res.status(400).json({
-      description: "O campo [custoPorKmAte50Km] contem um valor fora dos limites esperados: R$0,01 <= custoPorKmAte50Km <= R$999.999.999,99!",
+      description: "O campo [custoDeslocamentoPorKmAcimaDe50Km] deve conter um valor numérico!",
     });
+    return;
   }
-
-  if (!req.body.custoPorKmAcimaDe50Km) {
+  if (parseFloat(custoDeslocamentoPorKmAcimaDe50KmTemp) < 0 || parseFloat(custoDeslocamentoPorKmAcimaDe50KmTemp) > 999999999.99) {
     res.status(400).json({
-      description: "O campo [custoPorKmAcimaDe50Km] deve ser preenchido!",
+      description: "O campo [custoDeslocamentoPorKmAcimaDe50Km] contem um valor fora dos limites esperados: R$0,01 <= custoDeslocamentoPorKmAcimaDe50Km <= R$999.999.999,99!",
     });
-  }
-
-  if (isNaN(String(req.body.custoPorKmAcimaDe50Km).replaceAll(",", "."))) {
-    res.status(400).json({
-      description: "O campo [custoPorKmAcimaDe50Km] deve conter um valor numérico!",
-    });
-  }
-
-  if (
-    parseFloat(req.body.custoPorKmAcimaDe50Km) < 0.01 ||
-    parseFloat(req.body.custoPorKmAcimaDe50Km) > 999999999.99
-  ) {
-    res.status(400).json({
-      description: "O campo [custoPorKmAcimaDe50Km] contem um valor fora dos limites esperados: R$0,01 <= custoPorKmAcimaDe50Km <= R$999.999.999,99!",
-    });
+    return;
   }
 
   if (!req.body.bonusPorProducaoAcimaDe10000L) {
     res.status(400).json({
       description: "O campo [bonusPorProducaoAcimaDe10000L] deve ser preenchido!",
     });
+    return;
   }
-
-  if (isNaN(String(req.body.bonusPorProducaoAcimaDe10000L).replaceAll(",", "."))) {
+  const bonusPorProducaoAcimaDe10000LTemp = String(req.body.bonusPorProducaoAcimaDe10000L).replaceAll(",", ".");
+  if (isNaN(bonusPorProducaoAcimaDe10000LTemp)) {
     res.status(400).json({
       description: "O campo [bonusPorProducaoAcimaDe10000L] deve conter um valor numérico!",
     });
+    return;
   }
-
-  if (
-    parseFloat(req.body.bonusPorProducaoAcimaDe10000L) < 0.01 ||
-    parseFloat(req.body.bonusPorProducaoAcimaDe10000L) > 999999999.99
-  ) {
+  if (parseFloat(bonusPorProducaoAcimaDe10000LTemp) < 0 || parseFloat(bonusPorProducaoAcimaDe10000LTemp) > 999999999.99) {
     res.status(400).json({
       description: "O campo [bonusPorProducaoAcimaDe10000L] contem um valor fora dos limites esperados: R$0,01 <= bonusPorProducaoAcimaDe10000L <= R$999.999.999,99!",
     });
+    return;
   }
-}
+});
 
-function buildMap(req) {
+const buildMap = AssyncHandler(async (req) => {
   const tabelaPrecoMap = {
-    _id: req.body.id ? String(req.body.id) : undefined,
+    id: req.body.id ? String(req.body.id) : undefined,
     ano: parseInt(req.body.ano),
-    mes: parseInt(req.body.mes),
+    semestre: parseInt(req.body.semestre),
     precoBasePorLitro: parseFloat(req.body.precoBasePorLitro),
-    custoPorKmAte50Km: parseFloat(req.body.custoPorKmAte50Km),
-    custoPorKmAcimaDe50Km: parseFloat(req.body.custoPorKmAcimaDe50Km),
+    custoDeslocamentoPorKmAte50Km: parseFloat(req.body.custoDeslocamentoPorKmAte50Km),
+    custoDeslocamentoPorKmAcimaDe50Km: parseFloat(req.body.custoDeslocamentoPorKmAcimaDe50Km),
     bonusPorProducaoAcimaDe10000L: parseFloat(req.body.bonusPorProducaoAcimaDe10000L),
   };
 
   return tabelaPrecoMap;
-}
+});
+
+const getTabelaPrecoOut = AssyncHandler(async (tabelaPreco) => {
+  const tabelaPrecoOut = {
+    id: tabelaPreco._id,
+    ano: tabelaPreco.ano,
+    semestre: tabelaPreco.semestre,
+    precoBasePorLitro: tabelaPreco.precoBasePorLitro,
+    precoBasePorLitroFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.precoBasePorLitro),
+    custoDeslocamentoPorKmAte50Km: tabelaPreco.custoDeslocamentoPorKmAte50Km,
+    custoDeslocamentoPorKmAte50KmFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.custoDeslocamentoPorKmAte50Km),
+    custoDeslocamentoPorKmAcimaDe50Km: tabelaPreco.custoDeslocamentoPorKmAcimaDe50Km,
+    custoDeslocamentoPorKmAcimaDe50KmFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.custoDeslocamentoPorKmAcimaDe50Km),
+    bonusPorProducaoAcimaDe10000L: tabelaPreco.bonusPorProducaoAcimaDe10000L,
+    bonusPorProducaoAcimaDe10000LFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.bonusPorProducaoAcimaDe10000L),
+  }
+
+  return tabelaPrecoOut;
+});
+
+const summary = AssyncHandler(async (res, tabelaPrecoList) => {
+  if (tabelaPrecoList.length > 0) {
+    for (let i = 0; i < tabelaPrecoList.length; i++) {
+      tabelaPrecoList[i] = await getTabelaPrecoOut(tabelaPrecoList[i]);
+    }
+    if (tabelaPrecoList.length > 0) {
+      res.status(200).json({
+        description: "Dados das tabelas de preços obtidos com sucesso!",
+        data: tabelaPrecoList,
+      });
+    } else {
+      res.status(404).json({
+        description: "Tabelas de preços não encontradas!",
+      });
+    }
+  }
+});
 
 const createTabelaPreco = AssyncHandler(async (req, res) => {
   if (req.body.id) {
     res.status(400).json({
       description: "O campo [id] não deve ser preenchido!",
     });
+    return;
   }
-  validade(req, res);
+  await validade(req, res);
 
-  const tabelaPrecoMap = buildMap(req);
+  const tabelaPrecoMap = await buildMap(req);
 
-  const tabelaPreco = await TabelaPreco.create(tabelaPrecoMap, { new: true });
+  const tabelaPreco = await TabelaPreco.create(tabelaPrecoMap);
 
-  res.status(200).json({
+  const tabelaPrecoOut = await getTabelaPrecoOut(tabelaPreco);
+  res.status(201).json({
     description: "Dados da tabela de preço salvos com sucesso!",
-    data: tabelaPreco,
+    data: tabelaPrecoOut,
   });
 });
 
@@ -172,25 +198,27 @@ const updateTabelaPreco = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [id] deve ser preenchido!",
     });
+    return;
   }
   if (!req.body.id) {
     res.status(400).json({
       description: "O campo [id] deve ser preenchido!",
     });
+    return;
   }
   if (req.params.id !== req.body.id) {
     res.status(400).json({
       description: `O parâmetro [id] não pode ser diferente do campo [id]: ${req.params.id} !== ${req.body.id}`,
     });
+    return;
   }
   validade(req, res);
 
   const tabelaPrecoMap = buildMap(req);
 
-  // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
   const tabelaPreco = await TabelaPreco.findByIdAndUpdate(
     {
-      where: { id: tabelaPrecoMap._id },
+      _id: tabelaPrecoMap.id,
     },
     tabelaPrecoMap,
     {
@@ -198,10 +226,17 @@ const updateTabelaPreco = AssyncHandler(async (req, res) => {
     }
   );
 
-  res.status(200).json({
-    description: "Dados da tabela de preço atualizados com sucesso!",
-    data: tabelaPreco,
-  });
+  if (tabelaPreco) {
+    const tabelaPrecoOut = await getTabelaPrecoOut(tabelaPreco);
+    res.status(200).json({
+      description: "Dados da tabela de preço atualizados com sucesso!",
+      data: tabelaPrecoOut,
+    });
+  } else {
+    res.status(404).json({
+      description: "Tabela de preço não encontrada!",
+    });
+  }
 });
 
 const deleteTabelaPreco = AssyncHandler(async (req, res) => {
@@ -209,28 +244,35 @@ const deleteTabelaPreco = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [id] deve ser preenchido!",
     });
+    return;
   }
 
   const id = String(req.params.id);
 
-  // TODO: verificar qual o valor retornado quando não existe um registro com o _id especificado.
-  const tabelaPreco = await TabelaPreco.destroy({
-    where: { id: id },
-  });
+  const tabelaPreco = await TabelaPreco.findByIdAndDelete(id);
 
-  res.status(200).json({
-    description: "Tabela de preço excluída com sucesso!",
-    data: tabelaPreco,
-  });
+  if (tabelaPreco) {
+    const tabelaPrecoOut = await getTabelaPrecoOut(tabelaPreco);
+    res.status(200).json({
+      description: "Tabela de preço excluída com sucesso!",
+      data: tabelaPrecoOut,
+    });
+  } else {
+    res.status(404).json({
+      description: "Tabela de preço não encontrada!",
+    });
+  }
 });
 
 const findAllTabelasPrecos = AssyncHandler(async (req, res) => {
-  const tabelaPrecoList = await TabelaPreco.find({});
+  const tabelaPrecoList = await TabelaPreco
+    .find({})
+    .sort({
+      ano: 'asc',
+      semestre: 'asc'
+    });
 
-  res.status(200).json({
-    description: "Dados das tabelas de preços obtidos com sucesso!",
-    data: tabelaPrecoList,
-  });
+  await summary(res, tabelaPrecoList);
 });
 
 const findTabelaPrecoById = AssyncHandler(async (req, res) => {
@@ -238,26 +280,23 @@ const findTabelaPrecoById = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [id] deve ser preenchido!",
     });
+    return;
   }
 
   const id = String(req.params.id);
 
-  try {
-    const tabelaPreco = await TabelaPreco.findById(id);
+  const tabelaPreco = await TabelaPreco.findById(id);
 
-    if (producao) {
-      res.status(200).json({
-        description: "Tabela de preço obtida com sucesso!",
-        data: tabelaPreco,
-      });
-    } else {
-      res.status(404).json({
-        description: "Tabela de preço não encontrada!",
-        data: fazenda,
-      });
-    }
-  } catch (e) {
-    console.log(e); // Logs the error
+  if (tabelaPreco) {
+    const tabelaPrecoOut = await getTabelaPrecoOut(tabelaPreco);
+    res.status(200).json({
+      description: "Tabela de preço obtida com sucesso!",
+      data: tabelaPrecoOut,
+    });
+  } else {
+    res.status(404).json({
+      description: "Tabela de preço não encontrada!"
+    });
   }
 });
 
@@ -266,31 +305,34 @@ const findTabelasPrecosByAno = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [ano] deve ser preenchido!",
     });
+    return;
   }
-  if (isNaN(String(req.query.ano).replaceAll(",", "."))) {
+  const anoTemp = String(req.query.ano).replaceAll(",", ".");
+  if (isNaN(anoTemp)) {
     res.status(400).json({
       description: "O parâmetro [ano] deve conter um valor numérico!",
     });
+    return;
   }
-  if (Number.isInteger(req.query.ano).replaceAll(",", ".")) {
-    res.status(400).json({
-      description: "O parâmetro [ano] deve conter um valor numérico inteiro!",
-    });
-  }
-  if (parseInt(req.query.ano) < 1900 || parseInt(req.query.ano) > 9999) {
+  if (parseInt(anoTemp) < 1900 || parseInt(anoTemp) > 9999) {
     res.status(400).json({
       description: "O parâmetro [ano] contem um valor fora dos limites esperados: 1900 <= ano <= 9999!",
     });
+    return;
   }
 
   const ano = parseInt(req.query.ano);
 
-  const tabelaPrecoList = await TabelaPreco.find({ ano: ano });
+  const tabelaPrecoList = await TabelaPreco
+    .find({
+      ano: ano
+    })
+    .sort({
+      ano: 'asc',
+      semestre: 'asc'
+    });
 
-  res.status(200).json({
-    description: "Dados das tabelas de preços obtidos com sucesso!",
-    data: tabelaPrecoList,
-  });
+  await summary(res, tabelaPrecoList);
 });
 
 const findTabelaPrecoByAnoAndSemetre = AssyncHandler(async (req, res) => {
@@ -298,52 +340,62 @@ const findTabelaPrecoByAnoAndSemetre = AssyncHandler(async (req, res) => {
     res.status(400).json({
       description: "O parâmetro [ano] deve ser preenchido!",
     });
+    return;
   }
-  if (isNaN(String(req.query.ano).replaceAll(",", "."))) {
+  const anoTemp = String(req.query.ano).replaceAll(",", ".");
+  if (isNaN(anoTemp)) {
     res.status(400).json({
       description: "O parâmetro [ano] deve conter um valor numérico!",
     });
+    return;
   }
-  if (Number.isInteger(req.query.ano).replaceAll(",", ".")) {
-    res.status(400).json({
-      description: "O parâmetro [ano] deve conter um valor numérico inteiro!",
-    });
-  }
-  if (parseInt(req.query.ano) < 1900 || parseInt(req.query.ano) > 9999) {
+  if (parseInt(anoTemp) < 1900 || parseInt(anoTemp) > 9999) {
     res.status(400).json({
       description: "O parâmetro [ano] contem um valor fora dos limites esperados: 1900 <= ano <= 9999!",
     });
+    return;
   }
+
   if (!req.query.semestre) {
     res.status(400).json({
       description: "O parâmetro [semestre] deve ser preenchido!",
     });
+    return;
   }
-  if (isNaN(String(req.query.semestre).replaceAll(",", "."))) {
+  const semestreTemp = String(req.query.semestre).replaceAll(",", ".");
+  if (isNaN(semestreTemp)) {
     res.status(400).json({
       description: "O parâmetro [semestre] deve conter um valor numérico!",
     });
+    return;
   }
-  if (Number.isInteger(req.query.semestre).replaceAll(",", ".")) {
+  if (parseInt(semestreTemp) < 1 || parseInt(semestreTemp) > 2) {
     res.status(400).json({
-      description: "O parâmetro [semestre] deve conter um valor numérico inteiro!",
+      description: "O parâmetro [semestre] contem um valor fora dos limites esperados: 1 <= semestre <= 2!",
     });
-  }
-  if (parseInt(req.query.semestre) < 1 || parseInt(req.query.semestre) > 2) {
-    res.status(400).json({
-      description: "O parâmetro [semestre] contem um valor fora dos limites esperados: 1 <= semestre <= 12!",
-    });
+    return;
   }
 
   const ano = parseInt(req.query.ano);
   const semestre = parseInt(req.query.semestre);
 
-  const tabelaPrecoList = await TabelaPreco.find({ ano: ano, semestre: semestre });
+  const tabelaPrecoList = await TabelaPreco
+    .find({
+      ano: ano,
+      semestre: semestre
+    });
 
-  res.status(200).json({
-    description: "Dados das tabelas de preços obtidos com sucesso!",
-    data: tabelaPrecoList,
-  });
+    if (tabelaPrecoList.length > 0) {
+      const tabelaPrecoOut = await getTabelaPrecoOut(tabelaPrecoList[0]);
+      res.status(200).json({
+        description: "Tabela de preço obtida com sucesso!",
+        data: tabelaPrecoOut,
+      });
+    } else {
+      res.status(404).json({
+        description: "Tabela de preço não encontrada!"
+      });
+    }
 });
 
 const findTabelasPrecosByParams = AssyncHandler(async (req, res) => {

@@ -10,10 +10,10 @@ const tabelaPrecoSchema = new mongoose.Schema({
     precoBasePorLitro: {
       type: Number,
     },
-    custoPorKmAte50Km: {
+    custoDeslocamentoPorKmAte50Km: {
       type: Number,
     },
-    custoPorKmAcimaDe50Km: {
+    custoDeslocamentoPorKmAcimaDe50Km: {
       type: Number,
     },
     bonusPorProducaoAcimaDe10000L: {
