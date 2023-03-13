@@ -11,7 +11,7 @@ const validade = AssyncHandler(async (req, res) => {
     });
     return;
   }
-  const fazendaTemp = Fazenda.findById(String(req.body.fazenda));
+  const fazendaTemp = await Fazenda.findById(String(req.body.fazenda));
   if (!fazendaTemp) {
     res.status(400).json({
       description: "Fazenda não encontrada!",
@@ -85,7 +85,12 @@ const getFazendaOut = AssyncHandler(async (fazenda) => {
     nome: fazenda.nome,
     fazendeiro: fazendeiroOut,
     distanciaEmKm: fazenda.distanciaEmKm,
-    distanciaEmKmFormatted: new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(fazenda.distanciaEmKm),
+    ptBR: {
+      distanciaEmKm: new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(fazenda.distanciaEmKm),
+    },
+    enUS: {
+      distanciaEmKm: new Intl.NumberFormat('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(fazenda.distanciaEmKm),
+    }
   }
 
   return fazendaOut;
@@ -98,9 +103,16 @@ const getProducaoOut = AssyncHandler(async (producao) => {
   const producaoOut = {
     id: producao._id,
     fazenda: fazendaOut,
-    dataProducao: producao.dataProducao.toLocaleDateString("pt-BR"),
+    dataProducao: producao.dataProducao.toISOString(),
     litrosProduzidos: producao.litrosProduzidos,
-    litrosProduzidosFormatted: new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(producao.litrosProduzidos),
+    ptBR: {
+      dataProducao: producao.dataProducao.toLocaleString("pt-BR"),
+      litrosProduzidos: new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(producao.litrosProduzidos),
+    },
+    enUS: {
+      dataProducao: producao.dataProducao.toLocaleString('en-US'),
+      litrosProduzidos: new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(producao.litrosProduzidos),
+    },
   }
 
   return producaoOut;
@@ -108,13 +120,13 @@ const getProducaoOut = AssyncHandler(async (producao) => {
 
 const getProducaoFazendaAnoMesOut = AssyncHandler(async (tabelaPreco, fazenda, ano, mes) => {
   const dataProducaoInicial = new Date();
-  dataProducaoInicial.setDate(1);
-  dataProducaoInicial.setMonth(mes)
-  dataProducaoInicial.setFullYear(ano)
-  dataProducaoInicial.setHours(0)
-  dataProducaoInicial.setMinutes(0)
-  dataProducaoInicial.setSeconds(0)
-  dataProducaoInicial.setMilliseconds(0);
+  dataProducaoInicial.setUTCDate(1);
+  dataProducaoInicial.setUTCMonth(mes)
+  dataProducaoInicial.setUTCFullYear(ano)
+  dataProducaoInicial.setUTCHours(0)
+  dataProducaoInicial.setUTCMinutes(0)
+  dataProducaoInicial.setUTCSeconds(0)
+  dataProducaoInicial.setUTCMilliseconds(0);
 
   const dataProducaoFinal = new Date(dataProducaoInicial);
   dataProducaoFinal.setMonth(dataProducaoFinal.getMonth() + 1);
@@ -522,7 +534,7 @@ const findProducoesByFazendaAndAnoAndMes = AssyncHandler(async (req, res) => {
   const fazenda = String(req.query.fazenda);
   ano = parseInt(ano);
   mes = parseInt(mes) - 1;
-
+  
   const producaoFazendaAnoMesOut = await getProducaoFazendaAnoMesOut(tabelaPreco, fazenda, ano, mes)
 
   if (producaoFazendaAnoMesOut) {

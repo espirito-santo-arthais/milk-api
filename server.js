@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const colors = require("colors");
 const dbConnectionString = require("./config/config");
 const { errorHandler } = require("./middleware/error-handler");
+const swaggerJSDoc = require("swagger-jsdoc");
+const swaggerUI = require("swagger-ui-express");
 
 const app = express();
 
@@ -63,3 +65,19 @@ app.use("/milk/tabelas-de-precos", require("./routes/tabelasprecos-routes"));
 
 // Manipulador de erros
 app.use(errorHandler);
+
+// Swagger configuration
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Milk Production API',
+      version: '1.0.0'
+    }
+
+  },
+  apis: ['./routes/*.js']
+}
+
+const swaggerDocs = swaggerJSDoc(swaggerOptions);
+app.use('/milk-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));

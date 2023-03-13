@@ -143,13 +143,21 @@ const getTabelaPrecoOut = AssyncHandler(async (tabelaPreco) => {
     ano: tabelaPreco.ano,
     semestre: tabelaPreco.semestre,
     precoBasePorLitro: tabelaPreco.precoBasePorLitro,
-    precoBasePorLitroFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.precoBasePorLitro),
     custoDeslocamentoPorKmAte50Km: tabelaPreco.custoDeslocamentoPorKmAte50Km,
-    custoDeslocamentoPorKmAte50KmFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.custoDeslocamentoPorKmAte50Km),
     custoDeslocamentoPorKmAcimaDe50Km: tabelaPreco.custoDeslocamentoPorKmAcimaDe50Km,
-    custoDeslocamentoPorKmAcimaDe50KmFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.custoDeslocamentoPorKmAcimaDe50Km),
     bonusPorProducaoAcimaDe10000L: tabelaPreco.bonusPorProducaoAcimaDe10000L,
-    bonusPorProducaoAcimaDe10000LFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.bonusPorProducaoAcimaDe10000L),
+    ptBR: {
+      precoBasePorLitro: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.precoBasePorLitro),
+      custoDeslocamentoPorKmAte50Km: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.custoDeslocamentoPorKmAte50Km),
+      custoDeslocamentoPorKmAcimaDe50Km: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.custoDeslocamentoPorKmAcimaDe50Km),
+      bonusPorProducaoAcimaDe10000L: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tabelaPreco.bonusPorProducaoAcimaDe10000L),
+    },
+    enUS: {
+      precoBasePorLitro: '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(tabelaPreco.precoBasePorLitro),
+      custoDeslocamentoPorKmAte50Km: '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(tabelaPreco.custoDeslocamentoPorKmAte50Km),
+      custoDeslocamentoPorKmAcimaDe50Km: '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(tabelaPreco.custoDeslocamentoPorKmAcimaDe50Km),
+      bonusPorProducaoAcimaDe10000L: '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(tabelaPreco.bonusPorProducaoAcimaDe10000L),
+    }
   }
 
   return tabelaPrecoOut;
@@ -214,7 +222,7 @@ const updateTabelaPreco = AssyncHandler(async (req, res) => {
   }
   validade(req, res);
 
-  const tabelaPrecoMap = buildMap(req);
+  const tabelaPrecoMap = await buildMap(req);
 
   const tabelaPreco = await TabelaPreco.findByIdAndUpdate(
     {
@@ -385,17 +393,17 @@ const findTabelaPrecoByAnoAndSemetre = AssyncHandler(async (req, res) => {
       semestre: semestre
     });
 
-    if (tabelaPrecoList.length > 0) {
-      const tabelaPrecoOut = await getTabelaPrecoOut(tabelaPrecoList[0]);
-      res.status(200).json({
-        description: "Tabela de preço obtida com sucesso!",
-        data: tabelaPrecoOut,
-      });
-    } else {
-      res.status(404).json({
-        description: "Tabela de preço não encontrada!"
-      });
-    }
+  if (tabelaPrecoList.length > 0) {
+    const tabelaPrecoOut = await getTabelaPrecoOut(tabelaPrecoList[0]);
+    res.status(200).json({
+      description: "Tabela de preço obtida com sucesso!",
+      data: tabelaPrecoOut,
+    });
+  } else {
+    res.status(404).json({
+      description: "Tabela de preço não encontrada!"
+    });
+  }
 });
 
 const findTabelasPrecosByParams = AssyncHandler(async (req, res) => {

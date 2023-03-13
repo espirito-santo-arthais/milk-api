@@ -73,7 +73,12 @@ const getFazendaOut = AssyncHandler(async (fazenda) => {
     nome: fazenda.nome,
     fazendeiro: fazendeiroOut,
     distanciaEmKm: fazenda.distanciaEmKm,
-    distanciaEmKmFormatted: new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(fazenda.distanciaEmKm),
+    ptBR: {
+      distanciaEmKm: new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(fazenda.distanciaEmKm),
+    },
+    enUS: {
+      distanciaEmKm: new Intl.NumberFormat('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(fazenda.distanciaEmKm),
+    }
   }
 
   return fazendaOut;
