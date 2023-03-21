@@ -79,13 +79,27 @@ OBS: sempre cada passo corresponde a um commit, portanto verificar o conteúdo d
 
 20 - Configurar o Swagger;
 
-FALTA FAZER:
-
 21 - Desacoplar a implementação utilizando JoiJS para implentar os Middlewares de validação;
 
-22 - Implementar segurança com helmet e node-oauth2-jwt-bearer;
+FALTA FAZER:
 
-22 - Criar os testes unitários;
+22 - Desacoplar a persistência
 
-23 - Criar os testes integrados.
+23 - Implementar segurança com helmet e node-oauth2-jwt-bearer;
+
+24 - Criar os testes unitários;
+
+25 - Criar os testes integrados.
+
+
+{
+      "type": "node",
+      "name": "Attach by Process ID",
+      "request": "attach",
+      "processId": "${command:PickProcess}",
+      "protocol": "inspector",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}\\server.js",
+      "restart": true
+    },
  

@@ -66,14 +66,6 @@ app.use("/milk/producoes", require("./routes/producoes.routes"));
 // roteador das tabelas de precos
 app.use("/milk/tabelas-de-precos", require("./routes/tabelas-precos.routes"));
 
-//* Catch HTTP 404 
-app.use((req, res, next) => {
-  next(createHttpError(404));
-});
-
-// Manipulador de erros
-app.use(errorHandler);
-
 // Swagger configuration
 const swaggerOptions = {
   swaggerDefinition: {
@@ -89,3 +81,11 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/milk-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+
+//* Catch HTTP 404 
+app.use((req, res, next) => {
+  next(createHttpError(404));
+});
+
+// Manipulador de erros
+app.use(errorHandler);
