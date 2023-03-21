@@ -1,57 +1,14 @@
 const AssyncHandler = require("express-async-handler");
-const Fazendeiro = require("../models/Fazendeiro");
-const Fazenda = require("../models/Fazenda");
-const Producao = require("../models/Producao");
-const TabelaPreco = require("../models/TabelaPreco");
+const Fazendeiro = require("../models/fazendeiro");
+const Fazenda = require("../models/fazenda");
+const Producao = require("../models/producao");
+const TabelaPreco = require("../models/tabela-preco");
 
 const validade = AssyncHandler(async (req, res) => {
-  if (!req.body.fazenda) {
-    res.status(400).json({
-      description: "O campo [fazenda] deve ser preenchido!",
-    });
-    return;
-  }
   const fazendaTemp = await Fazenda.findById(String(req.body.fazenda));
   if (!fazendaTemp) {
-    res.status(400).json({
+    res.status(422).json({
       description: "Fazenda não encontrada!",
-    });
-    return;
-  }
-
-  if (!req.body.dataProducao) {
-    res.status(400).json({
-      description: "O campo [dataProducao] deve ser preenchido!",
-    });
-    return;
-  }
-  if (
-    !String(req.body.dataProducao)
-      .toLowerCase()
-      .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
-  ) {
-    res.status(400).json({
-      description: `O campo [dataProducao] possui um conteúdo inválido: ${req.body.dataProducao}!`,
-    });
-    return;
-  }
-
-  if (!req.body.litrosProduzidos) {
-    res.status(400).json({
-      description: "O campo [litrosProduzidos] deve ser preenchido!",
-    });
-    return;
-  }
-  const litrosProduzidos = String(req.body.litrosProduzidos).replaceAll(",", ".");
-  if (isNaN(litrosProduzidos)) {
-    res.status(400).json({
-      description: "O campo [litrosProduzidos] deve conter um valor numérico!",
-    });
-    return;
-  }
-  if (parseFloat(litrosProduzidos) < 1 || parseFloat(litrosProduzidos) > 200000) {
-    res.status(400).json({
-      description: "O campo [litrosProduzidos] contem um valor fora dos limites esperados: 1 <= litrosProduzidos <= 200000!",
     });
     return;
   }
@@ -238,12 +195,6 @@ const summary = AssyncHandler(async (res, producaoList) => {
 });
 
 const createProducao = AssyncHandler(async (req, res) => {
-  if (req.body.id) {
-    res.status(400).json({
-      description: "O campo [id] não deve ser preenchido!",
-    });
-    return;
-  }
   await validade(req, res);
 
   const producaoMap = await buildMap(req);
@@ -258,24 +209,6 @@ const createProducao = AssyncHandler(async (req, res) => {
 });
 
 const updateProducao = AssyncHandler(async (req, res) => {
-  if (!req.params.id) {
-    res.status(400).json({
-      description: "O parâmetro [id] deve ser preenchido!",
-    });
-    return;
-  }
-  if (!req.body.id) {
-    res.status(400).json({
-      description: "O campo [id] deve ser preenchido!",
-    });
-    return;
-  }
-  if (req.params.id !== req.body.id) {
-    res.status(400).json({
-      description: `O parâmetro [id] não pode ser diferente do campo [id]: ${req.params.id} !== ${req.body.id}`,
-    });
-    return;
-  }
   await validade(req, res);
 
   const producaoMap = await buildMap(req);
@@ -304,13 +237,6 @@ const updateProducao = AssyncHandler(async (req, res) => {
 });
 
 const deleteProducao = AssyncHandler(async (req, res) => {
-  if (!req.params.id) {
-    res.status(400).json({
-      description: "O parâmetro [id] deve ser preenchido!",
-    });
-    return;
-  }
-
   const id = String(req.params.id);
 
   const producao = await Producao.findByIdAndDelete(id);
@@ -329,13 +255,6 @@ const deleteProducao = AssyncHandler(async (req, res) => {
 });
 
 const findProducaoById = AssyncHandler(async (req, res) => {
-  if (!req.params.id) {
-    res.status(400).json({
-      description: "O parâmetro [id] deve ser preenchido!",
-    });
-    return;
-  }
-
   const id = String(req.params.id);
 
   const producao = await Producao.findById(id);
@@ -353,40 +272,7 @@ const findProducaoById = AssyncHandler(async (req, res) => {
   }
 });
 
-const findProducoesByDataProducaoInicialAndDataProducaoFinal = AssyncHandler(async (req, res) => {
-  if (!req.query.dataProducaoInicial) {
-    res.status(400).json({
-      description: "O parâmetro [dataProducaoInicial] deve ser preenchido!",
-    });
-    return;
-  }
-  if (
-    !String(req.query.dataProducaoInicial)
-      .toLowerCase()
-      .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
-  ) {
-    res.status(400).json({
-      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.query.dataProducaoInicial}!`,
-    });
-    return;
-  }
-  if (!req.query.dataProducaoFinal) {
-    res.status(400).json({
-      description: "O parâmetro [dataProducaoFinal] deve ser preenchido!",
-    });
-    return;
-  }
-  if (
-    !String(req.query.dataProducaoFinal)
-      .toLowerCase()
-      .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
-  ) {
-    res.status(400).json({
-      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.query.dataProducaoFinal}!`,
-    });
-    return;
-  }
-
+const findProducoesByDataProducaoBetween = AssyncHandler(async (req, res) => {
   const dataProducaoInicial = new Date(req.query.dataProducaoInicial).toISOString();
   const dataProducaoFinal = new Date(req.query.dataProducaoFinal).toISOString();
 
@@ -408,46 +294,7 @@ const findProducoesByDataProducaoInicialAndDataProducaoFinal = AssyncHandler(asy
   await summary(res, producaoList);
 });
 
-const findProducoesByFazendaAndDataProducaoInicialAndDataProducaoFinal = AssyncHandler(async (req, res) => {
-  if (!req.query.fazenda) {
-    res.status(400).json({
-      description: "O parâmetro [fazenda] deve ser preenchido!",
-    });
-    return;
-  }
-  if (!req.query.dataProducaoInicial) {
-    res.status(400).json({
-      description: "O parâmetro [dataProducaoInicial] deve ser preenchido!",
-    });
-    return;
-  }
-  if (
-    !String(req.query.dataProducaoInicial)
-      .toLowerCase()
-      .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
-  ) {
-    res.status(400).json({
-      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.query.dataProducaoInicial}!`,
-    });
-    return;
-  }
-  if (!req.query.dataProducaoFinal) {
-    res.status(400).json({
-      description: "O parâmetro [dataProducaoFinal] deve ser preenchido!",
-    });
-    return;
-  }
-  if (
-    !String(req.query.dataProducaoFinal)
-      .toLowerCase()
-      .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
-  ) {
-    res.status(400).json({
-      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.query.dataProducaoFinal}!`,
-    });
-    return;
-  }
-
+const findProducoesByFazendaAndDataProducaoBetween = AssyncHandler(async (req, res) => {
   const fazenda = String(req.query.fazenda);
   const dataProducaoInicial = new Date(req.query.dataProducaoInicial).toISOString();
   const dataProducaoFinal = new Date(req.query.dataProducaoFinal).toISOString();
@@ -472,59 +319,13 @@ const findProducoesByFazendaAndDataProducaoInicialAndDataProducaoFinal = AssyncH
 });
 
 const findProducoesByFazendaAndAnoAndMes = AssyncHandler(async (req, res) => {
-  if (!req.query.fazenda) {
-    res.status(400).json({
-      description: "O parâmetro [fazenda] deve ser preenchido!",
-    });
-    return;
-  }
-  if (!req.query.ano) {
-    res.status(400).json({
-      description: "O parâmetro [ano] deve ser preenchido!",
-    });
-    return;
-  }
-  let ano = String(req.query.ano).replaceAll(",", ".");
-  if (isNaN(ano)) {
-    res.status(400).json({
-      description: "O parâmetro [ano] deve conter um valor numérico!",
-    });
-    return;
-  }
-  if (parseInt(ano) < 1900 || parseInt(ano) > 9999) {
-    res.status(400).json({
-      description: "O parâmetro [ano] contem um valor fora dos limites esperados: 1900 <= ano <= 9999!",
-    });
-    return;
-  }
-
-  if (!req.query.mes) {
-    res.status(400).json({
-      description: "O parâmetro [mes] deve ser preenchido!",
-    });
-    return;
-  }
-  let mes = String(req.query.mes).replaceAll(",", ".");
-  if (isNaN(mes)) {
-    res.status(400).json({
-      description: "O parâmetro [mes] deve conter um valor numérico!",
-    });
-    return;
-  }
-  if (parseInt(mes) < 1 || parseInt(mes) > 12) {
-    res.status(400).json({
-      description: "O parâmetro [mes] contem um valor fora dos limites esperados: 1 <= semestre <= 12!",
-    });
-    return;
-  }
-
   const tabelaPrecoList = await TabelaPreco.find({
     ano: parseInt(req.query.ano),
     semestre: (parseInt(req.query.mes) <= 6 ? 1 : 2)
   });
 
   if (tabelaPrecoList.length === 0) {
-    res.status(400).json({
+    res.status(422).json({
       description: "A tabela de preço correspondente não foi encontrada. Impossível realizar os cálculos!",
     });
     return;
@@ -549,39 +350,13 @@ const findProducoesByFazendaAndAnoAndMes = AssyncHandler(async (req, res) => {
   }
 });
 
-const findProducoesMensaisByFazendaAndAno = AssyncHandler(async (req, res) => {
-  if (!req.query.fazenda) {
-    res.status(400).json({
-      description: "O parâmetro [fazenda] deve ser preenchido!",
-    });
-    return;
-  }
-  if (!req.query.ano) {
-    res.status(400).json({
-      description: "O parâmetro [ano] deve ser preenchido!",
-    });
-    return;
-  }
-  let ano = String(req.query.ano).replaceAll(",", ".");
-  if (isNaN(ano)) {
-    res.status(400).json({
-      description: "O parâmetro [ano] deve conter um valor numérico!",
-    });
-    return;
-  }
-  if (parseInt(ano) < 1900 || parseInt(ano) > 9999) {
-    res.status(400).json({
-      description: "O parâmetro [ano] contem um valor fora dos limites esperados: 1900 <= ano <= 9999!",
-    });
-    return;
-  }
-
+const findProducoesByFazendaAndAno = AssyncHandler(async (req, res) => {
   const tabelaPrecoList = await TabelaPreco.find({
     ano: parseInt(req.query.ano)
   });
 
   if (tabelaPrecoList.length < 2) {
-    res.status(400).json({
+    res.status(422).json({
       description: "As tabelas de preços correspondentes não foram encontradas. Impossível realizar os cálculos!",
     });
     return;
@@ -708,46 +483,7 @@ const findProducoesMensaisByFazendaAndAno = AssyncHandler(async (req, res) => {
   }
 });
 
-const findProducoesByFazendeiroAndDataProducaoInicialAndDataProducaoFinal = AssyncHandler(async (req, res) => {
-  if (!req.query.fazendeiro) {
-    res.status(400).json({
-      description: "O parâmetro [fazendeiro] deve ser preenchido!",
-    });
-    return;
-  }
-  if (!req.query.dataProducaoInicial) {
-    res.status(400).json({
-      description: "O parâmetro [dataProducaoInicial] deve ser preenchido!",
-    });
-    return;
-  }
-  if (
-    !String(req.query.dataProducaoInicial)
-      .toLowerCase()
-      .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
-  ) {
-    res.status(400).json({
-      description: `O parâmetro [dataProducaoInicial] possui um conteúdo inválido: ${req.query.dataProducaoInicial}!`,
-    });
-    return;
-  }
-  if (!req.query.dataProducaoFinal) {
-    res.status(400).json({
-      description: "O parâmetro [dataProducaoFinal] deve ser preenchido!",
-    });
-    return;
-  }
-  if (
-    !String(req.query.dataProducaoFinal)
-      .toLowerCase()
-      .match(/^\d{4}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/)
-  ) {
-    res.status(400).json({
-      description: `O parâmetro [dataProducaoFinal] possui um conteúdo inválido: ${req.query.dataProducaoFinal}!`,
-    });
-    return;
-  }
-
+const findProducoesByFazendeiroAndDataProducaoBetween = AssyncHandler(async (req, res) => {
   const fazendeiro = String(req.query.fazendeiro);
   const dataProducaoInicial = new Date(req.query.dataProducaoInicial).toISOString();
   const dataProducaoFinal = new Date(req.query.dataProducaoFinal).toISOString();
@@ -777,7 +513,7 @@ const findProducoesByFazendeiroAndAnoAndMes = AssyncHandler(async (req, res) => 
   await summary(res, producaoList);
 });
 
-const findProducoesMensaisByFazendeiroAndAno = AssyncHandler(async (req, res) => {
+const findProducoesByFazendeiroAndAno = AssyncHandler(async (req, res) => {
   const producaoList = [];
 
   await summary(res, producaoList);
@@ -785,19 +521,19 @@ const findProducoesMensaisByFazendeiroAndAno = AssyncHandler(async (req, res) =>
 
 const findProducoesByParams = AssyncHandler(async (req, res) => {
   if (req.query.dataProducaoInicial && req.query.dataProducaoFinal && !req.query.fazendeiro && !req.query.fazenda && !req.query.ano && !req.query.mes) {
-    findProducoesByDataProducaoInicialAndDataProducaoFinal(req, res);
+    findProducoesByDataProducaoBetween(req, res);
   } else if (req.query.dataProducaoInicial && req.query.dataProducaoFinal && !req.query.fazendeiro && req.query.fazenda && !req.query.ano && !req.query.mes) {
-    findProducoesByFazendaAndDataProducaoInicialAndDataProducaoFinal(req, res);
+    findProducoesByFazendaAndDataProducaoBetween(req, res);
   } else if (!req.query.dataProducaoInicial && !req.query.dataProducaoFinal && !req.query.fazendeiro && req.query.fazenda && req.query.ano && req.query.mes) {
     findProducoesByFazendaAndAnoAndMes(req, res);
   } else if (!req.query.dataProducaoInicial && !req.query.dataProducaoFinal && !req.query.fazendeiro && req.query.fazenda && req.query.ano && !req.query.mes) {
-    findProducoesMensaisByFazendaAndAno(req, res);
+    findProducoesByFazendaAndAno(req, res);
   } else if (req.query.dataProducaoInicial && req.query.dataProducaoFinal && req.query.fazendeiro && !req.query.fazenda && !req.query.ano && !req.query.mes) {
-    findProducoesByFazendeiroAndDataProducaoInicialAndDataProducaoFinal(req, res);
+    findProducoesByFazendeiroAndDataProducaoBetween(req, res);
   } else if (!req.query.dataProducaoInicial && !req.query.dataProducaoFinal && req.query.fazendeiro && !req.query.fazenda && req.query.ano && req.query.mes) {
     findProducoesByFazendeiroAndAnoAndMes(req, res);
   } else if (!req.query.dataProducaoInicial && !req.query.dataProducaoFinal && req.query.fazendeiro && !req.query.fazenda && req.query.ano && !req.query.mes) {
-    findProducoesMensaisByFazendeiroAndAno(req, res);
+    findProducoesByFazendeiroAndAno(req, res);
   } else {
     res.status(400).json({
       description: "Parâmetros inválidos!",

@@ -1,4 +1,5 @@
 const Express = require("express");
+const Validator = require('../middlewares/validator.middleware');
 
 const routes = Express.Router();
 
@@ -8,7 +9,7 @@ const {
     deleteTabelaPreco,
     findTabelaPrecoById,
     findTabelasPrecosByParams,
-} = require("../controllers/tabelapreco-controller");
+} = require("../controllers/tabela-preco.controller");
 
 /**
  * @swagger
@@ -123,7 +124,7 @@ const {
  *                   type: object
  *                   $ref: '#/components/schemas/TabelaPrecoOut'
  */
-routes.post("/", createTabelaPreco);
+routes.post("/", Validator('tabelaPrecoPost'), createTabelaPreco);
 
 /**
  * @swagger
@@ -163,7 +164,12 @@ routes.post("/", createTabelaPreco);
  *                   type: object
  *                   $ref: '#/components/schemas/TabelaPrecoOut'
  */
-routes.patch("/:id", updateTabelaPreco);
+routes.patch(
+    "/:id",
+    Validator('tabelaPrecoPatchParams'),
+    Validator('tabelaPrecoPatchBody'),
+    updateTabelaPreco
+);
 
 /**
  * @swagger
@@ -196,7 +202,7 @@ routes.patch("/:id", updateTabelaPreco);
  *                   type: object
  *                   $ref: '#/components/schemas/TabelaPrecoOut'
  */
-routes.delete("/:id", deleteTabelaPreco);
+routes.delete("/:id", Validator('tabelaPrecoDelete'), deleteTabelaPreco);
 
 /**
  * @swagger
@@ -229,7 +235,7 @@ routes.delete("/:id", deleteTabelaPreco);
  *                   type: object
  *                   $ref: '#/components/schemas/TabelaPrecoOut'
  */
-routes.get("/:id", findTabelaPrecoById);
+routes.get("/:id", Validator('tabelaPrecoGetById'), findTabelaPrecoById);
 
 /**
  * @swagger
@@ -255,6 +261,11 @@ routes.get("/:id", findTabelaPrecoById);
  *                   items: 
  *                     $ref: '#/components/schemas/TabelaPrecoOut'
  */
-routes.get("/", findTabelasPrecosByParams);
+routes.get(
+    "/",
+    Validator('tabelaPrecoGetByAnoAndSemestre'),
+    Validator('tabelaPrecoGetByAno'),
+    findTabelasPrecosByParams
+);
 
 module.exports = routes;

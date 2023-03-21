@@ -5,24 +5,7 @@ Api para registrar o volume mensal de leite produzido, o preço mensal por litro
 
 Tecnologias utilizadas
 
-- JavaScript: linguagem de programação;
-
-- NodeJS: framework JavaScript full-stack, para desenvolvimento back-end e front-end;
-
-- Express: microframework JavaScript back-end para NodeJS;
-
-- Mongoose: mapeador de documento de objeto, do Inglês Object Document Mapper - ODM;
-
-- MochaJS: framework de teste JavaScript, rica em recursos, para NodeJS e navegadores, tornando testes assíncronos simples de serem realizados;
-
-- ChaiJS: biblioteca de asserção BDD/TDD para NodeJS e navegadores que pode ser utilizada juntamente com qualquer estrutura de teste de javascript;
-
-- Swagger: ferramenta para documentação da API;
-
-- MongoDB: banco de dados chave-valor (NoSQL);
-
-- Joi: linguagem de descrição de esquema e validador de dados para JavaScript.
-
+Verificar a seção "dependencies" do arquivo package.json na raiz do projeto.
 
 Passa a passo para a criação da API:
 

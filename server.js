@@ -4,11 +4,14 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const colors = require("colors");
 const dbConnectionString = require("./config/config");
-const { errorHandler } = require("./middleware/error-handler");
+const { errorHandler } = require("./middlewares/error-handler.middleware");
 const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUI = require("swagger-ui-express");
+const http = require('http');
+const createHttpError = require('http-errors');
 
 const app = express();
+const httpServer = http.createServer(app);
 
 // enable Cross-Origin Requests CORS
 const corsOptions = {
@@ -52,16 +55,21 @@ app.get("/", (req, res) => {
 });
 
 // roteador dos fazendeiros
-app.use("/milk/fazendeiros", require("./routes/fazendeiros-routes"));
+app.use("/milk/fazendeiros", require("./routes/fazendeiros.routes"));
 
 // roteador das fazendas
-app.use("/milk/fazendas", require("./routes/fazendas-routes"));
+app.use("/milk/fazendas", require("./routes/fazendas.routes"));
 
 // roteador das producoes
-app.use("/milk/producoes", require("./routes/producoes-routes"));
+app.use("/milk/producoes", require("./routes/producoes.routes"));
 
 // roteador das tabelas de precos
-app.use("/milk/tabelas-de-precos", require("./routes/tabelasprecos-routes"));
+app.use("/milk/tabelas-de-precos", require("./routes/tabelas-precos.routes"));
+
+//* Catch HTTP 404 
+app.use((req, res, next) => {
+  next(createHttpError(404));
+});
 
 // Manipulador de erros
 app.use(errorHandler);

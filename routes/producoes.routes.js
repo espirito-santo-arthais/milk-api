@@ -1,4 +1,5 @@
 const Express = require("express");
+const Validator = require('../middlewares/validator.middleware');
 
 const routes = Express.Router();
 
@@ -8,7 +9,7 @@ const {
   deleteProducao,
   findProducaoById,
   findProducoesByParams,
-} = require("../controllers/producao-controller");
+} = require("../controllers/producao.controller");
 
 /**
  * @swagger
@@ -101,7 +102,7 @@ const {
  *                   type: object
  *                   $ref: '#/components/schemas/ProducaoOut'
  */
-routes.post("/", createProducao);
+routes.post("/", Validator('producaoPost'), createProducao);
 
 /**
  * @swagger
@@ -141,7 +142,12 @@ routes.post("/", createProducao);
  *                   type: object
  *                   $ref: '#/components/schemas/ProducaoOut'
  */
-routes.patch("/:id", updateProducao);
+routes.patch(
+  "/:id",
+  Validator('producaoPatchParams'),
+  Validator('producaoPatchBody'),
+  updateProducao
+);
 
 /**
  * @swagger
@@ -174,7 +180,7 @@ routes.patch("/:id", updateProducao);
  *                   type: object
  *                   $ref: '#/components/schemas/ProducaoOut'
  */
-routes.delete("/:id", deleteProducao);
+routes.delete("/:id", Validator('producaoDelete'), deleteProducao);
 
 /**
  * @swagger
@@ -207,7 +213,7 @@ routes.delete("/:id", deleteProducao);
  *                   type: object
  *                   $ref: '#/components/schemas/ProducaoOut'
  */
-routes.get("/:id", findProducaoById);
+routes.get("/:id", Validator('producaoGetById'), findProducaoById);
 
 /**
  * @swagger
@@ -276,6 +282,16 @@ routes.get("/:id", findProducaoById);
  *                   items: 
  *                     $ref: '#/components/schemas/ProducaoOut'
  */
-routes.get("/", findProducoesByParams);
+routes.get(
+  "/",
+  Validator('producaoGetByDataProducaoBetween'),
+  Validator('producaoGetByFazendaAndDataProducaoBetween'),
+  Validator('producaoGetByFazendaAndAnoAndMes'),
+  Validator('producaoGetByFazendaAndAno'),
+  Validator('producaoGetByFazendeiroAndDataProducaoBetween'),
+  Validator('producaoGetByFazendeiroAndAnoAndMes'),
+  Validator('producaoGetByFazendeiroAndAno'),
+  findProducoesByParams
+);
 
 module.exports = routes;

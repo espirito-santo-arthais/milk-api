@@ -1,4 +1,5 @@
 const Express = require("express");
+const Validator = require('../middlewares/validator.middleware');
 
 const routes = Express.Router();
 
@@ -8,7 +9,7 @@ const {
   deleteFazenda,
   findFazendaById,
   findFazendasByParams,
-} = require("../controllers/fazenda-controller");
+} = require("../controllers/fazenda.controller");
 
 /**
  * @swagger
@@ -97,7 +98,7 @@ const {
  *                   type: object
  *                   $ref: '#/components/schemas/FazendaOut'
  */
-routes.post("/", createFazenda);
+routes.post("/", Validator('fazendaPost'), createFazenda);
 
 /**
  * @swagger
@@ -137,7 +138,12 @@ routes.post("/", createFazenda);
  *                   type: object
  *                   $ref: '#/components/schemas/FazendaOut'
  */
-routes.patch("/:id", updateFazenda);
+routes.patch(
+  "/:id",
+  Validator('fazendaPatchParams'),
+  Validator('fazendaPatchBody'),
+  updateFazenda
+);
 
 /**
  * @swagger
@@ -170,7 +176,7 @@ routes.patch("/:id", updateFazenda);
  *                   type: object
  *                   $ref: '#/components/schemas/FazendaOut'
  */
-routes.delete("/:id", deleteFazenda);
+routes.delete("/:id", Validator('fazendaDelete'), deleteFazenda);
 
 /**
  * @swagger
@@ -203,7 +209,7 @@ routes.delete("/:id", deleteFazenda);
  *                   type: object
  *                   $ref: '#/components/schemas/FazendaOut'
  */
-routes.get("/:id", findFazendaById);
+routes.get("/:id", Validator('fazendaGetById'), findFazendaById);
 
 /**
  * @swagger
@@ -229,6 +235,13 @@ routes.get("/:id", findFazendaById);
  *                   items: 
  *                     $ref: '#/components/schemas/FazendaOut'
  */
-routes.get("/", findFazendasByParams);
+routes.get(
+  "/",
+  Validator('fazendaGetByName'),
+  Validator('fazendaGetByDistanciaEmKmBetween'),
+  Validator('fazendaGetByFazendeiro'),
+  Validator('fazendaGetByFazendeiroAndDistanciaEmKmBetween'),
+  findFazendasByParams
+);
 
 module.exports = routes;

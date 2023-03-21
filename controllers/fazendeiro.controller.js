@@ -1,35 +1,6 @@
 const AssyncHandler = require("express-async-handler");
-const Fazendeiro = require("../models/Fazendeiro");
-const Fazenda = require("../models/Fazenda");
-
-const validade = AssyncHandler(async (req, res) => {
-  if (!req.body.nome) {
-    res.status(400).json({
-      description: "O campo [nome] deve ser preenchido!",
-    });
-    return;
-  }
-
-  if (!req.body.email) {
-    res.status(400).json({
-      description: "O campo [email] deve ser preenchido!",
-    });
-    return;
-  }
-
-  if (
-    !String(req.body.email)
-      .toLowerCase()
-      .match(
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-      )
-  ) {
-    res.status(400).json({
-      description: `O campo [email] possui um conteúdo inválido: ${req.body.email}!`,
-    });
-    return;
-  }
-});
+const Fazendeiro = require("../models/fazendeiro");
+const Fazenda = require("../models/fazenda");
 
 const buildMap = AssyncHandler(async (req) => {
   const fazendeiroMap = {
@@ -68,14 +39,6 @@ const summary = AssyncHandler(async (res, fazendeiroList) => {
 });
 
 const createFazendeiro = AssyncHandler(async (req, res) => {
-  if (req.body.id) {
-    res.status(400).json({
-      description: "O campo [id] não deve ser preenchido!",
-    });
-    return;
-  }
-  await validade(req, res);
-
   const fazendeiroMap = await buildMap(req);
 
   const fazendeiro = await Fazendeiro.create(fazendeiroMap);
@@ -88,26 +51,6 @@ const createFazendeiro = AssyncHandler(async (req, res) => {
 });
 
 const updateFazendeiro = AssyncHandler(async (req, res) => {
-  if (!req.params.id) {
-    res.status(400).json({
-      description: "O parâmetro [id] deve ser preenchido!",
-    });
-    return;
-  }
-  if (!req.body.id) {
-    res.status(400).json({
-      description: "O campo [id] deve ser preenchido!",
-    });
-    return;
-  }
-  if (req.params.id !== req.body.id) {
-    res.status(400).json({
-      description: `O parâmetro [id] não pode ser diferente do campo [id]: ${req.params.id} !== ${req.body.id}`,
-    });
-    return;
-  }
-  await validade(req, res);
-
   const fazendeiroMap = await buildMap(req);
 
   const fazendeiro = await Fazendeiro.findByIdAndUpdate(
@@ -134,12 +77,6 @@ const updateFazendeiro = AssyncHandler(async (req, res) => {
 });
 
 const deleteFazendeiro = AssyncHandler(async (req, res) => {
-  if (!req.params.id) {
-    res.status(400).json({
-      description: "O parâmetro [id] deve ser preenchido!",
-    });
-    return;
-  }
   const fazendaList = await Fazenda.find({ fazendeiro: req.params.id, });
   if (fazendaList.length > 0) {
     res.status(400).json({
@@ -176,13 +113,6 @@ const findAllFazendeiros = AssyncHandler(async (req, res) => {
 });
 
 const findFazendeiroById = AssyncHandler(async (req, res) => {
-  if (!req.params.id) {
-    res.status(400).json({
-      description: "O parâmetro [id] deve ser preenchido!",
-    });
-    return;
-  }
-
   const id = String(req.params.id);
 
   const fazendeiro = await Fazendeiro.findById(id);
@@ -201,13 +131,6 @@ const findFazendeiroById = AssyncHandler(async (req, res) => {
 });
 
 const findFazendeirosByNome = AssyncHandler(async (req, res) => {
-  if (!req.query.nome) {
-    res.status(400).json({
-      description: "O parâmetro [nome] deve ser preenchido!",
-    });
-    return;
-  }
-
   const nome = String(req.query.nome);
 
   const fazendeiroList = await Fazendeiro
@@ -221,13 +144,6 @@ const findFazendeirosByNome = AssyncHandler(async (req, res) => {
 });
 
 const findFazendeirosByEmail = AssyncHandler(async (req, res) => {
-  if (!req.query.email) {
-    res.status(400).json({
-      description: "O parâmetro [email] deve ser preenchido!",
-    });
-    return;
-  }
-
   const email = String(req.query.email);
 
   const fazendeiroList = await Fazendeiro

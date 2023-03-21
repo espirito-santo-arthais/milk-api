@@ -1,4 +1,5 @@
 const Express = require("express");
+const Validator = require('../middlewares/validator.middleware');
 
 const routes = Express.Router();
 
@@ -8,7 +9,7 @@ const {
   deleteFazendeiro,
   findFazendeiroById,
   findFazendeirosByParams,
-} = require("../controllers/fazendeiro-controller");
+} = require("../controllers/fazendeiro.controller");
 
 /**
  * @swagger
@@ -62,7 +63,7 @@ const {
  *                   type: object
  *                   $ref: '#/components/schemas/Fazendeiro'
  */
-routes.post("/", createFazendeiro);
+routes.post("/", Validator('fazendeiroPost'), createFazendeiro);
 
 /**
  * @swagger
@@ -102,7 +103,12 @@ routes.post("/", createFazendeiro);
  *                   type: object
  *                   $ref: '#/components/schemas/Fazendeiro'
  */
-routes.patch("/:id", updateFazendeiro);
+routes.patch(
+  "/:id",
+  Validator('fazendeiroPatchParams'),
+  Validator('fazendeiroPatchBody'),
+  updateFazendeiro
+);
 
 /**
  * @swagger
@@ -135,7 +141,7 @@ routes.patch("/:id", updateFazendeiro);
  *                   type: object
  *                   $ref: '#/components/schemas/Fazendeiro'
  */
-routes.delete("/:id", deleteFazendeiro);
+routes.delete("/:id", Validator('fazendeiroDelete'), deleteFazendeiro);
 
 /**
  * @swagger
@@ -168,7 +174,7 @@ routes.delete("/:id", deleteFazendeiro);
  *                   type: object
  *                   $ref: '#/components/schemas/Fazendeiro'
  */
-routes.get("/:id", findFazendeiroById);
+routes.get("/:id", Validator('fazendeiroGetById'), findFazendeiroById);
 
 /**
  * @swagger
@@ -194,6 +200,11 @@ routes.get("/:id", findFazendeiroById);
  *                   items: 
  *                     $ref: '#/components/schemas/Fazendeiro'
  */
-routes.get("/", findFazendeirosByParams);
+routes.get(
+  "/",
+  Validator('fazendeiroGetByName'),
+  Validator('fazendeiroGetByEmail'),
+  findFazendeirosByParams
+);
 
 module.exports = routes;
