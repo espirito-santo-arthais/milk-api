@@ -82,10 +82,10 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
 app.use('/milk-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-//* Catch HTTP 404 
-app.use((req, res, next) => {
-  next(createHttpError(404));
-});
-
 // Manipulador de erros
 app.use(errorHandler);
+
+//* Catch HTTP 404 
+app.use((req, res, next) => {
+  return next(createHttpError(404, 'Recurso não encontrado!'));
+});
